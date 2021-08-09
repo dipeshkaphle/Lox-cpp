@@ -1,3 +1,6 @@
+#ifndef CPPLOXHPP
+#define CPPLOXHPP
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -19,4 +22,6 @@ public:
   static void run(const string &source);
   static void error(int line, string_view message);
   static void report(int line, string_view where, string_view message);
-}; // namespace CppLox
+};
+
+#endif
