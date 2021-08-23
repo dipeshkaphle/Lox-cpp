@@ -14,7 +14,7 @@
 using std::string;
 using std::string_view;
 
-class Lox{
+class Lox {
 public:
   static bool hadError;
   static void error(int line, string_view message);

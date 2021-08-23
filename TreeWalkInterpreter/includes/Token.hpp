@@ -1,8 +1,9 @@
 #pragma once
 
-#include "TokenTypes.hpp"
 #include <any>
 #include <string>
+
+#include "TokenTypes.hpp"
 
 using namespace std;
 
@@ -30,4 +31,3 @@ public:
     return type_to_string(type) + " " + lexeme + " " + literal_to_string();
   }
 };
-

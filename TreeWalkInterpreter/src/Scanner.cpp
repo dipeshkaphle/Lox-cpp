@@ -129,7 +129,6 @@ void Scanner::multiline_comment() {
       }
 
     } else if (peek() == '*') {
-
       advance();
       if (!is_at_end() && peek() == '/') {
         // a multi line comment closes

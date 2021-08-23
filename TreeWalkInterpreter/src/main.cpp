@@ -28,7 +28,6 @@ void runFile(char *filename) {
   std::ifstream inp(filename);
 
   if (inp.is_open()) {
-
     string all_code;
     string tmp;
     while (std::getline(inp, tmp)) {
