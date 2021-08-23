@@ -14,12 +14,9 @@
 using std::string;
 using std::string_view;
 
-class CppLox {
+class Lox{
 public:
   static bool hadError;
-  static void runFile(char *filename);
-  static void runPrompt();
-  static void run(const string &source);
   static void error(int line, string_view message);
   static void report(int line, string_view where, string_view message);
 };

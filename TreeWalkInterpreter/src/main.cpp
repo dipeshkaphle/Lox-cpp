@@ -1,8 +1,3 @@
-#ifndef CPPLOXCPP
-#define CPPLOXCPP
-
-#include "CppLox.hpp"
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -13,12 +8,15 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Lox.hpp"
 #include "Scanner.hpp"
+#include "Token.hpp"
 
 using std::string;
 using std::string_view;
+using namespace std;
 
-void CppLox::run(const string &source) {
+void run(const string &source) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
   for (Token token : tokens) {
@@ -26,7 +24,7 @@ void CppLox::run(const string &source) {
   }
 }
 
-void CppLox::runFile(char *filename) {
+void runFile(char *filename) {
   std::ifstream inp(filename);
 
   if (inp.is_open()) {
@@ -37,9 +35,9 @@ void CppLox::runFile(char *filename) {
       all_code.append(tmp);
       all_code.push_back('\n');
     }
-    CppLox lox;
-    lox.run(all_code);
-    if (CppLox::hadError) {
+    cout << all_code << '\n';
+    run(all_code);
+    if (Lox::hadError) {
       exit(20);
     }
   } else {
@@ -47,19 +45,27 @@ void CppLox::runFile(char *filename) {
   }
 }
 
-void CppLox::runPrompt() {
-  CppLox::hadError = false;
-  CppLox lox;
+void runPrompt() {
+  Lox::hadError = false;
   string line;
   while (true) {
     std::getline(std::cin, line);
     if (line == "") {
       break;
     } else {
-      lox.run(line);
-      CppLox::hadError = false;
+      run(line);
+      Lox::hadError = false;
     }
   }
 }
 
-#endif
+int main(int argc, char **argv) {
+  if (argc > 2) {
+    std::cout << "Usage: cpplox [script]";
+    exit(255);
+  } else if (argc == 2) {
+    runFile(argv[1]);
+  } else {
+    runPrompt();
+  }
+}

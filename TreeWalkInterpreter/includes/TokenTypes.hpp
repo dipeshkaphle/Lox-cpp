@@ -1,5 +1,4 @@
-#ifndef TOKENTYPESHPP
-#define TOKENTYPESHPP
+#pragma once
 
 #include <functional>
 #include <string>
@@ -97,4 +96,3 @@ inline std::string type_to_string(TokenType type) {
       {TokenType::ENDOFFILE, "EOF"}};
   return to_str[type];
 }
-#endif
