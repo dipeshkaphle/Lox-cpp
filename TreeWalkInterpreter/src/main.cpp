@@ -8,10 +8,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Lox.hpp"
-#include "Scanner.hpp"
-#include "Token.hpp"
 #include "includes/AstPrinter.hpp"
+#include "includes/Lox.hpp"
+#include "includes/Scanner.hpp"
+#include "includes/Token.hpp"
+
+#include "tl/expected.hpp"
+using namespace tl;
 
 using std::string;
 using std::string_view;
@@ -70,6 +73,14 @@ void f() {
   cout << ast->print(*bin_exp) << '\n';
   auto litrl_bool = literal_expr(true);
   cout << ast->print(litrl_bool) << '\n';
+}
+
+tl::expected<int, const char *> maybe_do_something(int i) {
+  if (i < 5) {
+    return 0;
+  } else {
+    return tl::make_unexpected("Uh oh");
+  }
 }
 
 int main(int argc, char **argv) {

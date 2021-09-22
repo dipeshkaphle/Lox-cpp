@@ -1,22 +1,14 @@
-add_library(Lox)
+add_library(Lox STATIC)
+target_link_libraries(Lox PRIVATE ${CONAN_LIBS})
 
-target_include_directories(
-  Lox
-  PUBLIC ${lox_SOURCE_DIR}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Lox PUBLIC ${lox_SOURCE_DIR}
+                                      ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_sources(Lox PRIVATE Lox.cpp Scanner.cpp Parser.cpp AstPrinter.cpp)
 
 add_subdirectory(Expr)
 
-target_sources(Lox PUBLIC Lox.cpp Scanner.cpp Parser.cpp AstPrinter.cpp)
-
-add_executable(lox_repl)
+add_executable(lox_repl main.cpp)
 set_target_properties(lox_repl PROPERTIES OUTPUT_NAME "lox")
 
-target_include_directories(
-  lox_repl
-  PRIVATE ${lox_SOURCE_DIR}/includes
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_sources(lox_repl PRIVATE main.cpp)
-
-target_link_libraries(lox_repl PRIVATE Lox)
+target_link_libraries(lox_repl PUBLIC Lox)

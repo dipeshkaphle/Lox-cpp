@@ -12,6 +12,9 @@
 #include "Token.hpp"
 #include "TokenTypes.hpp"
 
+#include "tl/expected.hpp"
+using namespace tl;
+
 using namespace std;
 /*
  *
@@ -36,8 +39,9 @@ using namespace std;
 class Parser {
 public:
   struct parse_error : public runtime_error {
-    parse_error(const char *err_msg) : runtime_error(err_msg) {}
+    explicit parse_error(const char *err_msg) : runtime_error(err_msg) {}
   };
+  using expr_or_err = expected<std::unique_ptr<Expr>, parse_error>;
 
 private:
   vector<Token> tokens;
@@ -55,19 +59,19 @@ private:
 
   bool match(const vector<TokenType> &tok);
 
-  Token consume(TokenType tok, const char *err_msg);
+  expected<Token, parse_error> consume(TokenType tok, const char *err_msg);
 
-  std::unique_ptr<Expr> expression();
-  std::unique_ptr<Expr> equality();
-  std::unique_ptr<Expr> comparision();
-  std::unique_ptr<Expr> term();
-  std::unique_ptr<Expr> factor();
-  std::unique_ptr<Expr> unary();
-  std::unique_ptr<Expr> primary();
+  expr_or_err expression();
+  expr_or_err equality();
+  expr_or_err comparision();
+  expr_or_err term();
+  expr_or_err factor();
+  expr_or_err unary();
+  expr_or_err primary();
 
   parse_error error(Token tok, const char *err_msg);
 
 public:
-  Parser(vector<Token> _toks) : tokens(_toks), cur(0) {}
-  std::unique_ptr<Expr> parse();
+  explicit Parser(vector<Token> _toks) : tokens(move(_toks)), cur(0) {}
+  expr_or_err parse();
 };

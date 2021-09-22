@@ -1,6 +1,14 @@
 #include "includes/Parser.hpp"
 #include "includes/Lox.hpp"
 
+using parse_err = Parser::parse_error;
+using expr_or_err = Parser::expr_or_err;
+using expr_ptr = std::unique_ptr<Expr>;
+
+#define RETURN_IF_NO_VALUE(expr)                                               \
+  if (!((expr).has_value()))                                                   \
+    return (expr);
+
 bool Parser::check(TokenType tk) {
   if (is_at_end())
     return false;
@@ -23,7 +31,8 @@ bool Parser::match(const vector<TokenType> &tok) {
   return false;
 }
 
-Token Parser::consume(TokenType tok, const char *err_msg) {
+expected<Token, Parser::parse_error> Parser::consume(TokenType tok,
+                                                     const char *err_msg) {
   if (check(tok)) {
     return this->advance();
   }
@@ -35,79 +44,115 @@ Parser::parse_error Parser::error(Token tok, const char *err_msg) {
   return parse_error(err_msg);
 }
 
-std::unique_ptr<Expr> Parser::expression() { return Parser::equality(); }
+expr_or_err Parser::expression() { return Parser::equality(); }
 
-std::unique_ptr<Expr> Parser::equality() {
+expr_or_err Parser::equality() {
   auto expr = comparision();
+  RETURN_IF_NO_VALUE(expr);
   while (match({TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL})) {
     Token op = previous();
     auto right = move(comparision());
-    expr = std::make_unique<binary_expr>(op, move(expr), move(right));
+    // expr = std::make_unique<binary_expr>(op, move(expr), move(right));
+    expr = std::move(right).and_then(
+        [&](std::unique_ptr<Expr> rgt) -> expr_or_err {
+          return (expr_ptr)std::make_unique<binary_expr>(
+              op, std::move(expr.value()), std::move(rgt));
+        });
+    RETURN_IF_NO_VALUE(expr);
   }
   return expr;
 }
 
-std::unique_ptr<Expr> Parser::comparision() {
+expr_or_err Parser::comparision() {
   auto expr = this->term();
+  RETURN_IF_NO_VALUE(expr);
   while (match({TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS,
                 TokenType::LESS_EQUAL})) {
     auto op = this->previous();
     auto right = this->term();
-    expr = std::make_unique<binary_expr>(op, std::move(expr), std::move(right));
+    // expr = std::make_unique<binary_expr>(op, std::move(expr),
+    // std::move(right));
+    expr = std::move(right).and_then(
+        [&](std::unique_ptr<Expr> rgt) -> expr_or_err {
+          return (expr_ptr)std::make_unique<binary_expr>(
+              op, std::move(expr.value()), std::move(rgt));
+        });
+    RETURN_IF_NO_VALUE(expr);
   }
   return expr;
 }
-std::unique_ptr<Expr> Parser::term() {
+
+expr_or_err Parser::term() {
   auto expr = this->factor();
+  RETURN_IF_NO_VALUE(expr);
   while (this->match({TokenType::PLUS, TokenType::MINUS})) {
     auto op = this->previous();
     auto right = this->factor();
-    expr = std::make_unique<binary_expr>(op, std::move(expr), std::move(right));
+    expr = std::move(right).and_then(
+        [&](std::unique_ptr<Expr> rgt) -> expr_or_err {
+          return (expr_ptr)std::make_unique<binary_expr>(
+              op, std::move(expr.value()), std::move(rgt));
+        });
+    RETURN_IF_NO_VALUE(expr);
   }
   return expr;
 }
 
-std::unique_ptr<Expr> Parser::factor() {
+expr_or_err Parser::factor() {
   auto expr = this->unary();
+  RETURN_IF_NO_VALUE(expr);
   while (match({TokenType::SLASH, TokenType::STAR})) {
     auto op = this->previous();
     auto right = this->unary();
-    expr = std::make_unique<binary_expr>(op, std::move(expr), std::move(right));
+    // expr = std::make_unique<binary_expr>(op, std::move(expr),
+    // std::move(right));
+    expr = std::move(right).and_then(
+        [&](std::unique_ptr<Expr> rgt) -> expr_or_err {
+          return (expr_ptr)std::make_unique<binary_expr>(
+              op, std::move(expr.value()), std::move(rgt));
+        });
+    RETURN_IF_NO_VALUE(expr);
   }
   return expr;
 }
 
-std::unique_ptr<Expr> Parser::unary() {
+expr_or_err Parser::unary() {
   if (match({TokenType::BANG, TokenType::MINUS})) {
     auto op = this->previous();
-    auto right = this->unary();
-    return make_unique<unary_expr>(op, std::move(right));
+    // auto right = this->unary();
+
+    return this->unary().and_then(
+        [&](std::unique_ptr<Expr> right) -> expr_or_err {
+          return (expr_ptr)std::make_unique<unary_expr>(op, std::move(right));
+        });
+    // return right.and_then([&](auto &&rgt))
+    // return make_unique<unary_expr>(op, std::move(right));
   }
   return primary();
 }
 
-std::unique_ptr<Expr> Parser::primary() {
+expr_or_err Parser::primary() {
   if (match({TokenType::TRUE}))
-    return std::make_unique<literal_expr>(true);
+    return (expr_ptr)std::make_unique<literal_expr>(true);
   else if (match({TokenType::FALSE}))
-    return std::make_unique<literal_expr>(false);
+    return (expr_ptr)std::make_unique<literal_expr>(false);
   else if (match({TokenType::NIL}))
-    return std::make_unique<literal_expr>(std::any{});
+    return (expr_ptr)std::make_unique<literal_expr>(std::any{});
   else if (match({TokenType::NUMBER, TokenType::STRING})) {
     auto prev_literal = previous().literal;
-    return std::make_unique<literal_expr>(std::move(prev_literal));
+    return (expr_ptr)std::make_unique<literal_expr>(std::move(prev_literal));
   } else if (match({TokenType::LEFT_PAREN})) {
-    std::unique_ptr<Expr> expr = expression();
-    consume(TokenType::RIGHT_PAREN, "Expected ) after expression");
-    return std::make_unique<grouping_expr>(std::move(expr));
+    // return expression().and_then([&](std::unique_ptr<Expr> expr) {
+    // consume(TokenType::RIGHT_BRACE, "Expected ) after expression");
+    // });
+    auto expr = expression();
+    auto got_consumed =
+        consume(TokenType::RIGHT_PAREN, "Expected ) after expression");
+    if (!got_consumed)
+      return tl::unexpected<parse_err>(got_consumed.error());
+    return (expr_ptr)std::make_unique<grouping_expr>(std::move(expr.value()));
   }
-  throw error(peek(), "Expect expression");
+  return tl::unexpected<parse_err>(error(peek(), "Expect expression"));
 }
 
-std::unique_ptr<Expr> Parser::parse() {
-  try {
-    return this->expression();
-  } catch (const Parser::parse_error &err) {
-    return nullptr;
-  }
-}
+expr_or_err Parser::parse() { return this->expression(); }

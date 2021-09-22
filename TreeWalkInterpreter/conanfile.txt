@@ -1,0 +1,5 @@
+[requires]
+tl-expected/1.0.0
+
+[generators]
+cmake
