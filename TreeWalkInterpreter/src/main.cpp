@@ -11,6 +11,7 @@
 #include "Lox.hpp"
 #include "Scanner.hpp"
 #include "Token.hpp"
+#include "includes/AstPrinter.hpp"
 
 using std::string;
 using std::string_view;
@@ -58,7 +59,21 @@ void runPrompt() {
   }
 }
 
+void f() {
+  std::unique_ptr<Expr> lhs = std::make_unique<literal_expr>(double(-123));
+  std::unique_ptr<Expr> lit = std::make_unique<literal_expr>(double(45.67));
+  std::unique_ptr<Expr> rhs = std::make_unique<grouping_expr>(std::move(lit));
+  std::unique_ptr<Expr> bin_exp = std::make_unique<binary_expr>(
+      Token(TokenType::PLUS, "+", std::string("+"), 0), std::move(lhs),
+      std::move(rhs));
+  auto ast = new AstPrinter();
+  cout << ast->print(*bin_exp) << '\n';
+  auto litrl_bool = literal_expr(true);
+  cout << ast->print(litrl_bool) << '\n';
+}
+
 int main(int argc, char **argv) {
+  // f();
   if (argc > 2) {
     std::cout << "Usage: cpplox [script]";
     exit(255);

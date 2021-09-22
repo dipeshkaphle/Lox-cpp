@@ -8,12 +8,10 @@
 
 using namespace std;
 
-class binary_expr : public Expr {
-private:
+struct binary_expr : public Expr {
   std::unique_ptr<Expr> left, right;
   Token op;
 
-public:
   binary_expr(Token _op, unique_ptr<Expr> left, unique_ptr<Expr> right);
 
   std::any accept(const expr_visitor<std::any> &visitor) const;

@@ -34,6 +34,11 @@ using namespace std;
  */
 
 class Parser {
+public:
+  struct parse_error : public runtime_error {
+    parse_error(const char *err_msg) : runtime_error(err_msg) {}
+  };
+
 private:
   vector<Token> tokens;
   int cur = 0;
@@ -50,11 +55,19 @@ private:
 
   bool match(const vector<TokenType> &tok);
 
-  std::unique_ptr<Expr> equality();
+  Token consume(TokenType tok, const char *err_msg);
 
+  std::unique_ptr<Expr> expression();
+  std::unique_ptr<Expr> equality();
   std::unique_ptr<Expr> comparision();
   std::unique_ptr<Expr> term();
+  std::unique_ptr<Expr> factor();
+  std::unique_ptr<Expr> unary();
+  std::unique_ptr<Expr> primary();
+
+  parse_error error(Token tok, const char *err_msg);
 
 public:
   Parser(vector<Token> _toks) : tokens(_toks), cur(0) {}
+  std::unique_ptr<Expr> parse();
 };

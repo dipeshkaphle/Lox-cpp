@@ -1,4 +1,4 @@
-#include "Scanner.hpp"
+#include "includes/Scanner.hpp"
 using tok = TokenType;
 
 const unordered_map<string, TokenType> Scanner::keywords = {
