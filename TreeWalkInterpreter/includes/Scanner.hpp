@@ -48,7 +48,7 @@ class Scanner {
   /*
    * appends a found token to tokens list
    */
-  void add_token(TokenType type, std::any literal = string(""));
+  void add_token(TokenType type, const std::any& literal = string(""));
 
   /*
    * parses a string literal
@@ -65,7 +65,7 @@ class Scanner {
   void multiline_comment();
 
 public:
-  Scanner(const string &source) : source(source) {}
+  explicit Scanner(string source) : source(std::move(source)) {}
 
   /*
    * scans all the tokens

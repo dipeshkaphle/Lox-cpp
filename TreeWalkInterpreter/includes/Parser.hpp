@@ -59,6 +59,8 @@ private:
 
   bool match(const vector<TokenType> &tok);
 
+  void synchronize();
+
   expected<Token, parse_error> consume(TokenType tok, const char *err_msg);
 
   expr_or_err expression();

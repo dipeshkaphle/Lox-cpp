@@ -31,12 +31,33 @@ bool Parser::match(const vector<TokenType> &tok) {
   return false;
 }
 
+void Parser::synchronize() {
+  advance();
+  while (!this->is_at_end()) {
+    if (previous().type == TokenType::SEMICOLON)
+      return;
+    switch (this->peek().type) {
+    case TokenType::CLASS:
+    case TokenType::FN:
+    case TokenType::LET:
+    case TokenType::FOR:
+    case TokenType::IF:
+    case TokenType::WHILE:
+    case TokenType::PRINT:
+    case TokenType::RETURN:
+      return;
+    default:
+      advance();
+    }
+  }
+}
+
 expected<Token, Parser::parse_error> Parser::consume(TokenType tok,
                                                      const char *err_msg) {
   if (check(tok)) {
     return this->advance();
   }
-  throw this->error(peek(), err_msg);
+  return tl::unexpected<Parser::parse_error>(this->error(peek(), err_msg));
 }
 
 Parser::parse_error Parser::error(Token tok, const char *err_msg) {
@@ -148,11 +169,11 @@ expr_or_err Parser::primary() {
     auto expr = expression();
     auto got_consumed =
         consume(TokenType::RIGHT_PAREN, "Expected ) after expression");
-    if (!got_consumed)
+    if (!got_consumed.has_value())
       return tl::unexpected<parse_err>(got_consumed.error());
     return (expr_ptr)std::make_unique<grouping_expr>(std::move(expr.value()));
   }
-  return tl::unexpected<parse_err>(error(peek(), "Expect expression"));
+  return tl::unexpected<parse_err>(this->error(peek(), "Expect expression"));
 }
 
 expr_or_err Parser::parse() { return this->expression(); }

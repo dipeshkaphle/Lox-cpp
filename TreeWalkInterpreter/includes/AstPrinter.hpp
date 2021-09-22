@@ -8,7 +8,7 @@
 
 #include <string>
 
-class AstPrinter : public expr_visitor<std::any> {
+class ast_printer : public expr_visitor<std::any> {
 private:
   std::string parenthesize(std::string name, const Expr &expr) const;
 

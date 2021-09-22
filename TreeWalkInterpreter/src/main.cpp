@@ -10,6 +10,7 @@
 
 #include "includes/AstPrinter.hpp"
 #include "includes/Lox.hpp"
+#include "includes/Parser.hpp"
 #include "includes/Scanner.hpp"
 #include "includes/Token.hpp"
 
@@ -23,9 +24,22 @@ using namespace std;
 void run(const string &source) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
+
   for (Token token : tokens) {
     std::cout << token.to_string() << '\n';
   }
+
+  Parser parser(tokens);
+
+  auto parsed_out = parser.parse();
+
+  if (Lox::hadError) {
+    return;
+  }
+  auto expr = std::move(parsed_out.value());
+
+  auto ast = ast_printer();
+  cout << ast.print(*expr) << '\n';
 }
 
 void runFile(char *filename) {
@@ -53,12 +67,11 @@ void runPrompt() {
   string line;
   while (true) {
     std::getline(std::cin, line);
-    if (line == "") {
+    if (line.empty()) {
       break;
-    } else {
-      run(line);
-      Lox::hadError = false;
     }
+    run(line);
+    Lox::hadError = false;
   }
 }
 
@@ -69,22 +82,20 @@ void f() {
   std::unique_ptr<Expr> bin_exp = std::make_unique<binary_expr>(
       Token(TokenType::PLUS, "+", std::string("+"), 0), std::move(lhs),
       std::move(rhs));
-  auto ast = new AstPrinter();
-  cout << ast->print(*bin_exp) << '\n';
+  auto ast = ast_printer();
+  cout << ast.print(*bin_exp) << '\n';
   auto litrl_bool = literal_expr(true);
-  cout << ast->print(litrl_bool) << '\n';
+  cout << ast.print(litrl_bool) << '\n';
 }
 
 tl::expected<int, const char *> maybe_do_something(int i) {
   if (i < 5) {
     return 0;
-  } else {
-    return tl::make_unexpected("Uh oh");
   }
+  return tl::make_unexpected("Uh oh");
 }
 
 int main(int argc, char **argv) {
-  // f();
   if (argc > 2) {
     std::cout << "Usage: cpplox [script]";
     exit(255);

@@ -10,35 +10,40 @@ const unordered_map<string, TokenType> Scanner::keywords = {
     {"while", tok::WHILE}};
 
 char Scanner::peek() {
-  if (is_at_end())
+  if (is_at_end()) {
     return '\0';
+}
   return source[this->cur];
 }
 
 char Scanner::peek_next() {
-  if (this->cur + 1 >= source.size())
+  if (this->cur + 1 >= source.size()) {
     return '\0';
+}
   return source[this->cur + 1];
 }
 
 bool Scanner::match(char expected) {
-  if (is_at_end())
+  if (is_at_end()) {
     return false;
-  if (source[cur] != expected)
+}
+  if (source[cur] != expected) {
     return false;
+}
   this->cur++;
   return true;
 }
 
-void Scanner::add_token(TokenType type, std::any literal) {
+void Scanner::add_token(TokenType type, const std::any& literal) {
   string text = source.substr(start, cur - start);
   tokens.emplace_back(Token(type, text, literal, cur_line));
 }
 
 void Scanner::get_string() {
   while (!is_at_end() && peek() != '"') {
-    if (peek() == '\n')
+    if (peek() == '\n') {
       cur_line++;
+}
     advance();
   }
   if (is_at_end()) {
@@ -67,16 +72,18 @@ void Scanner::get_number() {
   /*
    * consume all the digits
    */
-  while (isdigit(peek()))
+  while (isdigit(peek()) != 0) {
     advance();
+}
 
   /*
    * means we've encountered a double
    */
-  if (peek() == '.' && isdigit(peek_next())) {
+  if (peek() == '.' && (isdigit(peek_next()) != 0)) {
     advance();
-    while (isdigit(peek()))
+    while (isdigit(peek()) != 0) {
       advance();
+}
   }
 
   /*
@@ -91,7 +98,7 @@ void Scanner::get_number() {
 }
 
 void Scanner::get_identifier() {
-  while (isalpha(peek()) || isdigit(peek()) || peek() == '_') {
+  while ((isalpha(peek()) != 0) || (isdigit(peek()) != 0) || peek() == '_') {
     advance();
   }
 
@@ -111,7 +118,7 @@ void Scanner::get_identifier() {
 
 void Scanner::multiline_comment() {
   vector<string> st;
-  st.push_back("/*");
+  st.emplace_back("/*");
   while (!st.empty()) {
     if (is_at_end()) {
       Lox::error(cur_line, "Unclosed multi line comment");
@@ -122,7 +129,7 @@ void Scanner::multiline_comment() {
       if (!is_at_end() && peek() == '*') {
         // another multi line comment starts
         advance();
-        st.push_back("/*");
+        st.emplace_back("/*");
 
       } else if (!is_at_end()) {
         advance();
@@ -215,8 +222,9 @@ void Scanner::scan_token() {
   case '/': // multi line nested comments
     if (match('/')) {
       // A comment goes until the end of the line.
-      while (!is_at_end() && peek() != '\n')
+      while (!is_at_end() && peek() != '\n') {
         advance();
+}
     } else if (match('*')) {
       multiline_comment();
     } else {
@@ -228,12 +236,13 @@ void Scanner::scan_token() {
     break;
 
   default:
-    if (isdigit(c)) {
+    if (isdigit(c) != 0) {
       get_number();
-    } else if (isalpha(c) || c == '_') {
+    } else if ((isalpha(c) != 0) || c == '_') {
       get_identifier();
-    } else
+    } else {
       Lox::error(cur_line, "Unexpected character.");
+}
     break;
   }
 }
