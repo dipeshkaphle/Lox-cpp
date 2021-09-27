@@ -25,9 +25,9 @@ void run(const string &source) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
 
-  for (Token token : tokens) {
-    std::cout << token.to_string() << '\n';
-  }
+  // for (Token token : tokens) {
+  // std::cout << token.to_string() << '\n';
+  // }
 
   Parser parser(tokens);
 
@@ -37,9 +37,9 @@ void run(const string &source) {
     return;
   }
   auto expr = std::move(parsed_out.value());
-
-  auto ast = ast_printer();
-  cout << ast.print(*expr) << '\n';
+  Lox::interp.interpret(*expr);
+  // auto ast = ast_printer();
+  // cout << ast.print(*expr) << '\n';
 }
 
 void runFile(char *filename) {
@@ -57,6 +57,9 @@ void runFile(char *filename) {
     if (Lox::hadError) {
       exit(20);
     }
+    if (Lox::hadRuntimeError) {
+      exit(21);
+    }
   } else {
     throw std::runtime_error("Couldnt open the file " + string(filename));
   }
@@ -66,6 +69,8 @@ void runPrompt() {
   Lox::hadError = false;
   string line;
   while (true) {
+    cout << ">>> ";
+    cout.flush();
     std::getline(std::cin, line);
     if (line.empty()) {
       break;
@@ -86,13 +91,6 @@ void f() {
   cout << ast.print(*bin_exp) << '\n';
   auto litrl_bool = literal_expr(true);
   cout << ast.print(litrl_bool) << '\n';
-}
-
-tl::expected<int, const char *> maybe_do_something(int i) {
-  if (i < 5) {
-    return 0;
-  }
-  return tl::make_unexpected("Uh oh");
 }
 
 int main(int argc, char **argv) {

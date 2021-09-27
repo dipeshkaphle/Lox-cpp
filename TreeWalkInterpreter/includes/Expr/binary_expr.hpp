@@ -14,5 +14,5 @@ struct binary_expr : public Expr {
 
   binary_expr(Token _op, unique_ptr<Expr> left, unique_ptr<Expr> right);
 
-  std::any accept(const expr_visitor<std::any> &visitor) const;
-};
+  std::any accept(const expr_visitor<std::any> &visitor) const override;
+} __attribute__((aligned(128)));

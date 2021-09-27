@@ -4,9 +4,16 @@ using std::string;
 using std::string_view;
 
 bool Lox::hadError = false;
+bool Lox::hadRuntimeError = false;
+interpreter Lox::interp = interpreter();
 
 void Lox::error(int line, string_view message) {
   Lox::report(line, "", message);
+}
+
+void Lox::report_runtime_error(const Lox_runtime_err &err) {
+  cout << string(err.what()) + "\[line " << err.token.line << " ]\n";
+  hadRuntimeError = true;
 }
 
 void Lox::report(int line, string_view where, string_view message) {
