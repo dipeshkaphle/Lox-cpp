@@ -48,7 +48,7 @@ class Scanner {
   /*
    * appends a found token to tokens list
    */
-  void add_token(TokenType type, const std::any& literal = string(""));
+  void add_token(TokenType type, const std::any &literal = string(""));
 
   /*
    * parses a string literal

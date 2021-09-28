@@ -4,6 +4,8 @@
 #include "includes/Expr/literal_expr.hpp"
 #include "includes/Expr/unary_expr.hpp"
 #include "includes/Lox.hpp"
+#include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/PrintStmt.hpp"
 #include "includes/TokenTypes.hpp"
 #include "includes/runtime_err.hpp"
 
@@ -19,6 +21,23 @@ void interpreter::check_number_operands(
     return;
   }
   throw Lox_runtime_err(tok, "Operand must be number");
+}
+
+string interpreter::stringify(const std::any &obj) {
+  if (!obj.has_value()) {
+    return "nil";
+  }
+  if (obj.type() == typeid(double)) {
+    auto num = any_cast<double>(obj);
+    if (num == (long long)(num)) {
+      return to_string((long long)num);
+    }
+    return to_string(num);
+  }
+  if (obj.type() == typeid(bool)) {
+    return (any_cast<bool>(obj)) ? "true" : "false";
+  }
+  return any_cast<string>(obj);
 }
 
 bool interpreter::is_truthy(const std::any &val) {
@@ -38,10 +57,12 @@ bool interpreter::is_truthy(const std::any &val) {
 }
 
 bool interpreter::is_equal(const std::any &l, const std::any &r) {
-  if (!l.has_value() && !r.has_value())
+  if (!l.has_value() && !r.has_value()) {
     return true;
-  if (!l.has_value() || !r.has_value())
+  }
+  if (!l.has_value() || !r.has_value()) {
     return false;
+  }
   if (l.type() == r.type()) {
     if (l.type() == typeid(double)) {
       return any_cast<double>(l) == any_cast<double>(r);
@@ -94,6 +115,9 @@ std::any interpreter::visit_binary_expr(const binary_expr &exp) const {
     return any_cast<double>(left) / any_cast<double>(right);
   case TokenType::STAR:
     check_number_operands(exp.op, array{REF(left), REF(right)});
+    if (any_cast<double>(right) == 0) {
+      throw Lox_runtime_err(exp.op, "Division by zero");
+    }
     return any_cast<double>(left) * any_cast<double>(right);
   default:
     break;
@@ -126,11 +150,26 @@ std::any interpreter::evaluate(const Expr &exp) const {
   return exp.accept(*this);
 }
 
-void interpreter::interpret(const Expr &exp) const {
+std::any interpreter::execute(const Stmt &stmt) const {
+  return stmt.accept(*this);
+}
+
+std::any interpreter::visit_print_stmt(const print_stmt &stmt) const {
+  auto val = this->evaluate(*stmt.expr);
+  cout << this->stringify(val) << '\n';
+  return val;
+}
+std::any interpreter::visit_expr_stmt(const expr_stmt &stmt) const {
+  auto val = this->evaluate(*stmt.expr);
+  return val;
+}
+
+void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts) const {
   try {
-    std::any val = this->evaluate(exp);
-    cout << interpreter::stringify(val) << '\n';
+    for (auto &stmt : stmts) {
+      this->execute(*stmt);
+    }
   } catch (Lox_runtime_err &err) {
-    // Lox::report_runtime_error(error);
+    Lox::report_runtime_error(err);
   }
 }

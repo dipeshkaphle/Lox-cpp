@@ -12,29 +12,29 @@ const unordered_map<string, TokenType> Scanner::keywords = {
 char Scanner::peek() {
   if (is_at_end()) {
     return '\0';
-}
+  }
   return source[this->cur];
 }
 
 char Scanner::peek_next() {
   if (this->cur + 1 >= source.size()) {
     return '\0';
-}
+  }
   return source[this->cur + 1];
 }
 
 bool Scanner::match(char expected) {
   if (is_at_end()) {
     return false;
-}
+  }
   if (source[cur] != expected) {
     return false;
-}
+  }
   this->cur++;
   return true;
 }
 
-void Scanner::add_token(TokenType type, const std::any& literal) {
+void Scanner::add_token(TokenType type, const std::any &literal) {
   string text = source.substr(start, cur - start);
   tokens.emplace_back(Token(type, text, literal, cur_line));
 }
@@ -43,7 +43,7 @@ void Scanner::get_string() {
   while (!is_at_end() && peek() != '"') {
     if (peek() == '\n') {
       cur_line++;
-}
+    }
     advance();
   }
   if (is_at_end()) {
@@ -74,7 +74,7 @@ void Scanner::get_number() {
    */
   while (isdigit(peek()) != 0) {
     advance();
-}
+  }
 
   /*
    * means we've encountered a double
@@ -83,7 +83,7 @@ void Scanner::get_number() {
     advance();
     while (isdigit(peek()) != 0) {
       advance();
-}
+    }
   }
 
   /*
@@ -108,7 +108,7 @@ void Scanner::get_identifier() {
    * cur= 3
    *
    */
-  string ident = source.substr(start, this->cur - this->cur);
+  string ident = source.substr(start, this->cur - this->start);
   TokenType type = tok::IDENTIFIER;
   if (keywords.contains(ident)) {
     type = keywords.at(ident);
@@ -224,7 +224,7 @@ void Scanner::scan_token() {
       // A comment goes until the end of the line.
       while (!is_at_end() && peek() != '\n') {
         advance();
-}
+      }
     } else if (match('*')) {
       multiline_comment();
     } else {
@@ -242,7 +242,7 @@ void Scanner::scan_token() {
       get_identifier();
     } else {
       Lox::error(cur_line, "Unexpected character.");
-}
+    }
     break;
   }
 }

@@ -9,6 +9,9 @@
 #include "Expr/grouping_expr.hpp"
 #include "Expr/literal_expr.hpp"
 #include "Expr/unary_expr.hpp"
+#include "Stmt/ExprStmt.hpp"
+#include "Stmt/PrintStmt.hpp"
+#include "Stmt/Stmt.hpp"
 #include "Token.hpp"
 #include "TokenTypes.hpp"
 
@@ -42,6 +45,7 @@ public:
     explicit parse_error(const char *err_msg) : runtime_error(err_msg) {}
   };
   using expr_or_err = expected<std::unique_ptr<Expr>, parse_error>;
+  using stmt_or_err = expected<std::unique_ptr<Stmt>, parse_error>;
 
 private:
   vector<Token> tokens;
@@ -71,9 +75,13 @@ private:
   expr_or_err unary();
   expr_or_err primary();
 
-  parse_error error(Token tok, const char *err_msg);
+  stmt_or_err statement();
+  stmt_or_err expression_statement();
+  stmt_or_err print_statement();
+
+  static parse_error error(Token tok, const char *err_msg);
 
 public:
   explicit Parser(vector<Token> _toks) : tokens(move(_toks)), cur(0) {}
-  expr_or_err parse();
+  vector<stmt_or_err> parse();
 };

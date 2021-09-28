@@ -9,6 +9,7 @@ target_sources(Lox PRIVATE Lox.cpp Scanner.cpp Parser.cpp AstPrinter.cpp
                            Interpreter.cpp)
 
 add_subdirectory(Expr)
+add_subdirectory(Stmt)
 
 add_executable(lox_repl main.cpp)
 set_target_properties(lox_repl PROPERTIES OUTPUT_NAME "lox")

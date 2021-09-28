@@ -31,15 +31,17 @@ void run(const string &source) {
 
   Parser parser(tokens);
 
-  auto parsed_out = parser.parse();
+  auto maybe_statements = parser.parse();
 
   if (Lox::hadError) {
     return;
   }
-  auto expr = std::move(parsed_out.value());
-  Lox::interp.interpret(*expr);
-  // auto ast = ast_printer();
-  // cout << ast.print(*expr) << '\n';
+  vector<std::unique_ptr<Stmt>> statements;
+  statements.reserve(maybe_statements.size());
+  for (auto &maybe_stmt : maybe_statements) {
+    statements.emplace_back(std::move(maybe_stmt.value()));
+  }
+  Lox::interp.interpret(statements);
 }
 
 void runFile(char *filename) {
@@ -52,7 +54,7 @@ void runFile(char *filename) {
       all_code.append(tmp);
       all_code.push_back('\n');
     }
-    cout << all_code << '\n';
+    // cout << all_code << '\n';
     run(all_code);
     if (Lox::hadError) {
       exit(20);

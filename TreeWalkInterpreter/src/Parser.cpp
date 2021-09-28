@@ -1,32 +1,36 @@
 #include "includes/Parser.hpp"
 #include "includes/Lox.hpp"
 
+#include <ranges>
+
 using parse_err = Parser::parse_error;
 using expr_or_err = Parser::expr_or_err;
 using expr_ptr = std::unique_ptr<Expr>;
+using stmt_or_err = Parser::stmt_or_err;
+using stmt_ptr = std::unique_ptr<Stmt>;
 
 #define RETURN_IF_NO_VALUE(expr)                                               \
   if (!((expr).has_value()))                                                   \
     return (expr);
 
 bool Parser::check(TokenType tk) {
-  if (is_at_end())
+  if (is_at_end()) {
     return false;
+  }
   return peek().type == tk;
 }
 
 Token Parser::advance() {
-  if (!is_at_end())
+  if (!is_at_end()) {
     this->cur++;
+  }
   return previous();
 }
 
 bool Parser::match(const vector<TokenType> &tok) {
-  for (auto &tk : tok) {
-    if (check(tk)) {
-      advance();
-      return true;
-    }
+  if (std::ranges::any_of(tok, [&](auto &tk) { return this->check(tk); })) {
+    advance();
+    return true;
   }
   return false;
 }
@@ -34,8 +38,9 @@ bool Parser::match(const vector<TokenType> &tok) {
 void Parser::synchronize() {
   advance();
   while (!this->is_at_end()) {
-    if (previous().type == TokenType::SEMICOLON)
+    if (previous().type == TokenType::SEMICOLON) {
       return;
+    }
     switch (this->peek().type) {
     case TokenType::CLASS:
     case TokenType::FN:
@@ -57,7 +62,7 @@ expected<Token, Parser::parse_error> Parser::consume(TokenType tok,
   if (check(tok)) {
     return this->advance();
   }
-  return tl::unexpected<Parser::parse_error>(this->error(peek(), err_msg));
+  return tl::unexpected<Parser::parse_error>(Parser::error(peek(), err_msg));
 }
 
 Parser::parse_error Parser::error(Token tok, const char *err_msg) {
@@ -153,27 +158,65 @@ expr_or_err Parser::unary() {
 }
 
 expr_or_err Parser::primary() {
-  if (match({TokenType::TRUE}))
+  if (match({TokenType::TRUE})) {
     return (expr_ptr)std::make_unique<literal_expr>(true);
-  else if (match({TokenType::FALSE}))
+  }
+  if (match({TokenType::FALSE})) {
     return (expr_ptr)std::make_unique<literal_expr>(false);
-  else if (match({TokenType::NIL}))
+  }
+  if (match({TokenType::NIL})) {
     return (expr_ptr)std::make_unique<literal_expr>(std::any{});
-  else if (match({TokenType::NUMBER, TokenType::STRING})) {
+  }
+  if (match({TokenType::NUMBER, TokenType::STRING})) {
     auto prev_literal = previous().literal;
     return (expr_ptr)std::make_unique<literal_expr>(std::move(prev_literal));
-  } else if (match({TokenType::LEFT_PAREN})) {
+  }
+  if (match({TokenType::LEFT_PAREN})) {
     // return expression().and_then([&](std::unique_ptr<Expr> expr) {
     // consume(TokenType::RIGHT_BRACE, "Expected ) after expression");
     // });
     auto expr = expression();
     auto got_consumed =
         consume(TokenType::RIGHT_PAREN, "Expected ) after expression");
-    if (!got_consumed.has_value())
+    if (!got_consumed.has_value()) {
       return tl::unexpected<parse_err>(got_consumed.error());
+    }
     return (expr_ptr)std::make_unique<grouping_expr>(std::move(expr.value()));
   }
   return tl::unexpected<parse_err>(this->error(peek(), "Expect expression"));
 }
 
-expr_or_err Parser::parse() { return this->expression(); }
+stmt_or_err Parser::statement() {
+  if (this->match({TokenType::PRINT})) {
+    return this->print_statement();
+  }
+  return this->expression_statement();
+}
+
+stmt_or_err Parser::print_statement() {
+  auto expr = this->expression();
+  consume(TokenType::SEMICOLON, "Expect ; after statement");
+  return move(expr).and_then([&](expr_or_err &&exp) -> stmt_or_err {
+    return std::make_unique<print_stmt>(move(exp.value()));
+  });
+}
+
+stmt_or_err Parser::expression_statement() {
+  auto expr = this->expression();
+  consume(TokenType::SEMICOLON, "Expect ; after expression\n");
+  return move(expr).and_then([&](expr_or_err &&exp) -> stmt_or_err {
+    return std::make_unique<expr_stmt>(move(exp.value()));
+  });
+}
+
+vector<stmt_or_err> Parser::parse() {
+  vector<stmt_or_err> maybe_statements;
+  while (!is_at_end()) {
+    auto stmt = this->statement();
+    if (!stmt.has_value()) {
+      this->synchronize();
+    }
+    maybe_statements.emplace_back(std::move(stmt));
+  }
+  return maybe_statements;
+}
