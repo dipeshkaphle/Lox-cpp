@@ -2,7 +2,7 @@
 using namespace std;
 
 unary_expr::unary_expr(Token _op, unique_ptr<Expr> right)
-    : op(move(_op)), right(std::move(right)) {}
+    : right(std::move(right)), op(move(_op)) {}
 
 std::any unary_expr::accept(const expr_visitor<std::any> &visitor) const {
   return visitor.visit_unary_expr(*this);

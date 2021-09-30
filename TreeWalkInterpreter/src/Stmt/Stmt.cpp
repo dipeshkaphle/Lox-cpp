@@ -1,5 +1,6 @@
 #include "includes/Stmt/Stmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
 
 /*
@@ -9,7 +10,7 @@
 
 expr_stmt::expr_stmt(std::unique_ptr<Expr> expr) : expr(std::move(expr)) {}
 
-std::any expr_stmt::accept(const stmt_visitor<std::any> &visitor) const {
+std::any expr_stmt::accept(stmt_visitor<std::any> &visitor) {
   return visitor.visit_expr_stmt(*this);
 }
 
@@ -25,11 +26,26 @@ std::any expr_stmt::accept(const stmt_visitor<std::any> &visitor) const {
 
 print_stmt::print_stmt(std::unique_ptr<Expr> expr) : expr(std::move(expr)) {}
 
-std::any print_stmt::accept(const stmt_visitor<std::any> &visitor) const {
+std::any print_stmt::accept(stmt_visitor<std::any> &visitor) {
   return visitor.visit_print_stmt(*this);
 }
 
 /*
  * Print Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Let Statement
+ */
+let_stmt::let_stmt(Token _name, std::unique_ptr<Expr> _expr)
+    : name(std::move(_name)), initializer_expr(std::move(_expr)) {}
+std::any let_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_let_stmt(*this);
+}
+
+/*
+ * Let Statement End
  *  =============================================================================
  */

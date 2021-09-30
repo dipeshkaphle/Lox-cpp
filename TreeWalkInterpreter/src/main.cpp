@@ -14,6 +14,9 @@
 #include "includes/Scanner.hpp"
 #include "includes/Token.hpp"
 
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/ostream.h"
 #include "tl/expected.hpp"
 using namespace tl;
 
@@ -71,33 +74,38 @@ void runPrompt() {
   Lox::hadError = false;
   string line;
   while (true) {
-    cout << ">>> ";
-    cout.flush();
+    fmt::print(">>> ");
+    // cout << ">>> ";
+    // cout.flush();
     std::getline(std::cin, line);
     if (line.empty()) {
       break;
     }
-    run(line);
+    try {
+      run(line);
+    } catch (std::exception &e) {
+      cerr << "Exception: " << e.what() << '\n';
+    }
     Lox::hadError = false;
   }
 }
 
-void f() {
-  std::unique_ptr<Expr> lhs = std::make_unique<literal_expr>(double(-123));
-  std::unique_ptr<Expr> lit = std::make_unique<literal_expr>(double(45.67));
-  std::unique_ptr<Expr> rhs = std::make_unique<grouping_expr>(std::move(lit));
-  std::unique_ptr<Expr> bin_exp = std::make_unique<binary_expr>(
-      Token(TokenType::PLUS, "+", std::string("+"), 0), std::move(lhs),
-      std::move(rhs));
-  auto ast = ast_printer();
-  cout << ast.print(*bin_exp) << '\n';
-  auto litrl_bool = literal_expr(true);
-  cout << ast.print(litrl_bool) << '\n';
-}
+/*
+ * void f() {
+ *   std::unique_ptr<Expr> lhs = std::make_unique<literal_expr>(double(-123));
+ *   std::unique_ptr<Expr> lit = std::make_unique<literal_expr>(double(45.67));
+ *   std::unique_ptr<Expr> rhs =
+ * std::make_unique<grouping_expr>(std::move(lit)); std::unique_ptr<Expr>
+ * bin_exp = std::make_unique<binary_expr>( Token(TokenType::PLUS, "+",
+ * std::string("+"), 0), std::move(lhs), std::move(rhs)); auto ast =
+ * ast_printer(); cout << ast.print(*bin_exp) << '\n'; auto litrl_bool =
+ * literal_expr(true); cout << ast.print(litrl_bool) << '\n';
+ * }
+ */
 
 int main(int argc, char **argv) {
   if (argc > 2) {
-    std::cout << "Usage: cpplox [script]";
+    fmt::print("Usage: cpplox [script]");
     exit(255);
   } else if (argc == 2) {
     runFile(argv[1]);

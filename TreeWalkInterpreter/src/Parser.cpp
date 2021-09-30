@@ -11,7 +11,7 @@ using stmt_ptr = std::unique_ptr<Stmt>;
 
 #define RETURN_IF_NO_VALUE(expr)                                               \
   if (!((expr).has_value()))                                                   \
-    return (expr);
+    return tl::unexpected((expr).error());
 
 bool Parser::check(TokenType tk) {
   if (is_at_end()) {
@@ -70,14 +70,34 @@ Parser::parse_error Parser::error(Token tok, const char *err_msg) {
   return parse_error(err_msg);
 }
 
-expr_or_err Parser::expression() { return Parser::equality(); }
+expr_or_err Parser::expression() { return this->assignment(); }
+
+expr_or_err Parser::assignment() {
+  auto maybe_expr = this->equality();
+  RETURN_IF_NO_VALUE(maybe_expr);
+  if (match({TokenType::EQUAL})) {
+    auto equals = previous();
+    auto value = this->assignment();
+    RETURN_IF_NO_VALUE(value);
+    auto rhs = std::move(value.value());
+    auto lhs = std::move(maybe_expr.value());
+    try {
+      auto &lval = dynamic_cast<variable_expr &>(*lhs);
+      return (expr_ptr)std::make_unique<assign_expr>(lval.name, std::move(rhs));
+    } catch (std::exception &e) {
+      return tl::unexpected<parse_err>(this->error(
+          equals, "Invalid assignment target. It is not an lvalue"));
+    }
+  }
+  return maybe_expr;
+}
 
 expr_or_err Parser::equality() {
   auto expr = comparision();
   RETURN_IF_NO_VALUE(expr);
   while (match({TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL})) {
     Token op = previous();
-    auto right = move(comparision());
+    auto right = comparision();
     // expr = std::make_unique<binary_expr>(op, move(expr), move(right));
     expr = std::move(right).and_then(
         [&](std::unique_ptr<Expr> rgt) -> expr_or_err {
@@ -171,19 +191,22 @@ expr_or_err Parser::primary() {
     auto prev_literal = previous().literal;
     return (expr_ptr)std::make_unique<literal_expr>(std::move(prev_literal));
   }
+  if (match({TokenType::IDENTIFIER})) {
+    return (expr_ptr)std::make_unique<variable_expr>(previous());
+  }
+
   if (match({TokenType::LEFT_PAREN})) {
     // return expression().and_then([&](std::unique_ptr<Expr> expr) {
     // consume(TokenType::RIGHT_BRACE, "Expected ) after expression");
     // });
     auto expr = expression();
-    auto got_consumed =
+    auto maybe_right_paren =
         consume(TokenType::RIGHT_PAREN, "Expected ) after expression");
-    if (!got_consumed.has_value()) {
-      return tl::unexpected<parse_err>(got_consumed.error());
-    }
+    RETURN_IF_NO_VALUE(maybe_right_paren);
     return (expr_ptr)std::make_unique<grouping_expr>(std::move(expr.value()));
   }
-  return tl::unexpected<parse_err>(this->error(peek(), "Expect expression"));
+  return tl::make_unexpected<parse_err>(
+      this->error(peek(), "Expect expression"));
 }
 
 stmt_or_err Parser::statement() {
@@ -195,7 +218,10 @@ stmt_or_err Parser::statement() {
 
 stmt_or_err Parser::print_statement() {
   auto expr = this->expression();
-  consume(TokenType::SEMICOLON, "Expect ; after statement");
+  RETURN_IF_NO_VALUE(expr);
+  auto maybe_semicolon =
+      consume(TokenType::SEMICOLON, "Expect ; after statement");
+  RETURN_IF_NO_VALUE(maybe_semicolon);
   return move(expr).and_then([&](expr_or_err &&exp) -> stmt_or_err {
     return std::make_unique<print_stmt>(move(exp.value()));
   });
@@ -203,16 +229,48 @@ stmt_or_err Parser::print_statement() {
 
 stmt_or_err Parser::expression_statement() {
   auto expr = this->expression();
-  consume(TokenType::SEMICOLON, "Expect ; after expression\n");
+  RETURN_IF_NO_VALUE(expr);
+  auto maybe_semicolon =
+      consume(TokenType::SEMICOLON, "Expect ; after expression");
+  RETURN_IF_NO_VALUE(maybe_semicolon);
   return move(expr).and_then([&](expr_or_err &&exp) -> stmt_or_err {
     return std::make_unique<expr_stmt>(move(exp.value()));
   });
 }
 
+stmt_or_err Parser::declaration() {
+  if (match({TokenType::LET})) {
+    return this->let_declaration();
+  }
+  return statement();
+}
+
+stmt_or_err Parser::let_declaration() {
+  /*
+   * I wont allow empty declaration
+   * let x; is not allowed
+   * It must be let x = 2; (something like this)
+   */
+  auto maybe_id = consume(TokenType::IDENTIFIER,
+                          "Expected identifier after let declaration");
+  RETURN_IF_NO_VALUE((maybe_id));
+  auto maybe_equal_to = consume(
+      TokenType::EQUAL,
+      "Cannot have empty declartion. It must be of form let <id> = <expr>;");
+  RETURN_IF_NO_VALUE(maybe_equal_to);
+  auto initializer_expr = this->expression();
+  RETURN_IF_NO_VALUE(initializer_expr);
+  auto maybe_semicolon = consume(TokenType::SEMICOLON,
+                                 "Expected ; after the end of let declaration");
+  RETURN_IF_NO_VALUE(maybe_semicolon);
+  return (stmt_ptr)std::make_unique<let_stmt>(
+      maybe_id.value(), std::move(initializer_expr.value()));
+}
+
 vector<stmt_or_err> Parser::parse() {
   vector<stmt_or_err> maybe_statements;
   while (!is_at_end()) {
-    auto stmt = this->statement();
+    auto stmt = this->declaration();
     if (!stmt.has_value()) {
       this->synchronize();
     }

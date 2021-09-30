@@ -6,5 +6,5 @@
 class Stmt {
 public:
   virtual ~Stmt() = default;
-  virtual std::any accept(const stmt_visitor<std::any> &visitor) const = 0;
+  virtual std::any accept(stmt_visitor<std::any> &visitor) = 0;
 };

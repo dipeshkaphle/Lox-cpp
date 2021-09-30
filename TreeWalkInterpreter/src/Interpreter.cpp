@@ -1,13 +1,20 @@
 #include "includes/Interpreter.hpp"
+#include "includes/Expr/assign_expr.hpp"
 #include "includes/Expr/binary_expr.hpp"
 #include "includes/Expr/grouping_expr.hpp"
 #include "includes/Expr/literal_expr.hpp"
 #include "includes/Expr/unary_expr.hpp"
+#include "includes/Expr/variable_expr.hpp"
 #include "includes/Lox.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
 #include "includes/TokenTypes.hpp"
 #include "includes/runtime_err.hpp"
+
+#include "fmt/core.h"
+
+// TODO : Make all the visit expr and visit stmt return tl::expected<any,Err>
 
 #define REF(x) std::reference_wrapper((x))
 
@@ -146,28 +153,63 @@ std::any interpreter::visit_literal_expr(const literal_expr &exp) const {
   return exp.value;
 }
 
+std::any interpreter::visit_variable_expr(const variable_expr &exp) const {
+  auto maybe_val = this->env.get(exp.name);
+  /*
+   *
+   * Will be trigerred when i do
+   * >>> x;
+   *
+   */
+  if (maybe_val.has_value()) {
+    return maybe_val.value();
+  }
+  throw move(maybe_val.error());
+}
+
+std::any interpreter::visit_assign_expr(const assign_expr &exp) const {
+  auto val = this->evaluate(*exp.value);
+  auto res = this->env.assign(exp.name, val);
+  /*
+   *
+   * Will be trigerred when i do
+   * >>> x=3;
+   *
+   */
+  if (res.has_value()) {
+    return res.value();
+  }
+  throw move(res.error());
+}
+
 std::any interpreter::evaluate(const Expr &exp) const {
   return exp.accept(*this);
 }
 
-std::any interpreter::execute(const Stmt &stmt) const {
-  return stmt.accept(*this);
-}
+std::any interpreter::execute(Stmt &stmt) { return stmt.accept(*this); }
 
-std::any interpreter::visit_print_stmt(const print_stmt &stmt) const {
+std::any interpreter::visit_print_stmt(print_stmt &stmt) {
   auto val = this->evaluate(*stmt.expr);
-  cout << this->stringify(val) << '\n';
-  return val;
-}
-std::any interpreter::visit_expr_stmt(const expr_stmt &stmt) const {
-  auto val = this->evaluate(*stmt.expr);
+  fmt::print("{}\n", this->stringify(val));
   return val;
 }
 
-void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts) const {
+std::any interpreter::visit_expr_stmt(expr_stmt &stmt) {
+  auto val = this->evaluate(*stmt.expr);
+  return val;
+}
+
+std::any interpreter::visit_let_stmt(let_stmt &stmt) {
+  auto val = this->evaluate(*stmt.initializer_expr);
+  this->env.define(stmt.name.lexeme, val);
+  return val;
+}
+
+void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts) {
   try {
     for (auto &stmt : stmts) {
-      this->execute(*stmt);
+      auto val = this->execute(*stmt);
+      fmt::print("=> {}\n", interpreter::stringify(val));
     }
   } catch (Lox_runtime_err &err) {
     Lox::report_runtime_error(err);

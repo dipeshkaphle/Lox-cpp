@@ -38,6 +38,10 @@ std::any ast_printer::visit_grouping_expr(const grouping_expr &expr) const {
   return parenthesize("group", *expr.expression);
 }
 
+std::any ast_printer::visit_variable_expr(const variable_expr &exp) const {
+  return exp.name.lexeme;
+}
+
 std::any ast_printer::visit_literal_expr(const literal_expr &expr) const {
   if (!expr.value.has_value())
     return std::string("nil");

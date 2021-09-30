@@ -5,11 +5,14 @@
 #include <vector>
 
 #include "Expr/Expr.hpp"
+#include "Expr/assign_expr.hpp"
 #include "Expr/binary_expr.hpp"
 #include "Expr/grouping_expr.hpp"
 #include "Expr/literal_expr.hpp"
 #include "Expr/unary_expr.hpp"
+#include "Expr/variable_expr.hpp"
 #include "Stmt/ExprStmt.hpp"
+#include "Stmt/LetStmt.hpp"
 #include "Stmt/PrintStmt.hpp"
 #include "Stmt/Stmt.hpp"
 #include "Token.hpp"
@@ -24,7 +27,9 @@ using namespace std;
  *
  *
  *
- *	expression     → equality ;
+ *  expression     → assignment ;
+ *  assignment     → IDENTIFIER "=" assignment
+ *                 | equality ;
  *	equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  *	comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  *	term           → factor ( ( "-" | "+" ) factor )* ;
@@ -68,6 +73,7 @@ private:
   expected<Token, parse_error> consume(TokenType tok, const char *err_msg);
 
   expr_or_err expression();
+  expr_or_err assignment();
   expr_or_err equality();
   expr_or_err comparision();
   expr_or_err term();
@@ -78,6 +84,8 @@ private:
   stmt_or_err statement();
   stmt_or_err expression_statement();
   stmt_or_err print_statement();
+  stmt_or_err declaration();
+  stmt_or_err let_declaration();
 
   static parse_error error(Token tok, const char *err_msg);
 

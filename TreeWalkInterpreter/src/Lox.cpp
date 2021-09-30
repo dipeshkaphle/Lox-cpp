@@ -1,5 +1,8 @@
 #include "includes/Lox.hpp"
 
+#include "fmt/core.h"
+#include "fmt/ostream.h"
+
 using std::string;
 using std::string_view;
 
@@ -12,12 +15,12 @@ void Lox::error(int line, string_view message) {
 }
 
 void Lox::report_runtime_error(const Lox_runtime_err &err) {
-  cout << string(err.what()) + "\[line " << err.token.line << " ]\n";
+  fmt::print(std::cerr, "{} [line {} ]\n", err.what(), err.token.line);
   hadRuntimeError = true;
 }
 
 void Lox::report(int line, string_view where, string_view message) {
-  std::cerr << "[line " << line << "] Error " << where << ": " << message;
+  fmt::print(std::cerr, "[line {}] Error {} : {}\n", line, where, message);
   Lox::hadError = true;
 }
 

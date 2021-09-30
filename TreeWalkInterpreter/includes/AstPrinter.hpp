@@ -5,6 +5,7 @@
 #include "Expr/grouping_expr.hpp"
 #include "Expr/literal_expr.hpp"
 #include "Expr/unary_expr.hpp"
+#include "Expr/variable_expr.hpp"
 
 #include <string>
 
@@ -21,4 +22,5 @@ public:
   std::any visit_unary_expr(const unary_expr &expr) const override;
   std::any visit_grouping_expr(const grouping_expr &expr) const override;
   std::any visit_literal_expr(const literal_expr &expr) const override;
+  std::any visit_variable_expr(const variable_expr &exp) const override;
 };
