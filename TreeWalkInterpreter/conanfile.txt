@@ -4,3 +4,6 @@ fmt/8.0.0
 
 [generators]
 cmake
+
+[options]
+fmt:header_only=True

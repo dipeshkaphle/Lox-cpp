@@ -1,6 +1,6 @@
 #include "includes/Environment.hpp"
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 #include "tl/expected.hpp"
 
 #include <ranges>
@@ -11,9 +11,8 @@ any_or_err Environment::get(const Token &name) const {
       return table.at(name.lexeme);
     }
   }
-  std::string s;
-  fmt::format_to(back_inserter(s), "Undefined variable: {}. ", name.lexeme);
-  return tl::make_unexpected<Lox_runtime_err>(Lox_runtime_err(name, s.c_str()));
+  return tl::make_unexpected<Lox_runtime_err>(Lox_runtime_err(
+      name, fmt::format("Undefined variable: {}. ", name.lexeme).c_str()));
 }
 
 void Environment::define(const std::string &name, std::any val) {
@@ -27,7 +26,6 @@ any_or_err Environment::assign(const Token &name, std::any val) const {
       return table[name.lexeme];
     }
   }
-  std::string s;
-  fmt::format_to(back_inserter(s), "Undefined variable: {}. ", name.lexeme);
-  return tl::make_unexpected<Lox_runtime_err>(Lox_runtime_err(name, s.c_str()));
+  return tl::make_unexpected<Lox_runtime_err>(Lox_runtime_err(
+      name, fmt::format("Undefined variable: {}. ", name.lexeme).c_str()));
 }
