@@ -24,7 +24,7 @@ using std::string;
 using std::string_view;
 using namespace std;
 
-void run(const string &source) {
+void run(const string &source, bool is_repl = false) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
 
@@ -44,7 +44,7 @@ void run(const string &source) {
   for (auto &maybe_stmt : maybe_statements) {
     statements.emplace_back(std::move(maybe_stmt.value()));
   }
-  Lox::interp.interpret(statements);
+  Lox::interp.interpret(statements, is_repl);
 }
 
 void runFile(char *filename) {
@@ -58,7 +58,11 @@ void runFile(char *filename) {
       all_code.push_back('\n');
     }
     // cout << all_code << '\n';
-    run(all_code);
+    try {
+      run(all_code, false);
+    } catch (std::exception &e) {
+      fmt::print(std::cerr, "Exception: {}", e.what());
+    }
     if (Lox::hadError) {
       exit(20);
     }
@@ -82,7 +86,7 @@ void runPrompt() {
       break;
     }
     try {
-      run(line);
+      run(line, true);
     } catch (std::exception &e) {
       cerr << "Exception: " << e.what() << '\n';
     }

@@ -23,6 +23,8 @@ public:
   Environment() : sym_table(1, map_type()) {}
   any_or_err get(const Token &name) const;
   void define(const std::string &name, std::any val);
+  void push_frame();
+  void pop_frame();
 
   // because the sym_table is mutable, this can be const despite the fact that
   // ill be mutating sym_table

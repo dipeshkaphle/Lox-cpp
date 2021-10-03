@@ -3,12 +3,16 @@
 #include "includes/Expr/binary_expr.hpp"
 #include "includes/Expr/grouping_expr.hpp"
 #include "includes/Expr/literal_expr.hpp"
+#include "includes/Expr/logical_expr.hpp"
 #include "includes/Expr/unary_expr.hpp"
 #include "includes/Expr/variable_expr.hpp"
 #include "includes/Lox.hpp"
+#include "includes/Stmt/BlockStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
+#include "includes/Stmt/WhileStmt.hpp"
 #include "includes/TokenTypes.hpp"
 #include "includes/runtime_err.hpp"
 
@@ -182,11 +186,51 @@ std::any interpreter::visit_assign_expr(const assign_expr &exp) const {
   throw move(res.error());
 }
 
+std::any interpreter::visit_logical_expr(const logical_expr &exp) const {
+  /*
+   * Doesnt return true or false necessarily
+   * Will return the truthy equivalent value
+   *
+   * >>>  print "hi" or "hello" => "hi"
+   * >>>  print nil or nil => nil
+   * >>>  print "hi" and "hello"  => "hello" (because it is evaluated last)
+   * >>>  print nil or "hi" => "hi"
+   */
+  auto lhs = this->evaluate(*exp.left);
+  if (exp.op.type == TokenType::OR) {
+    if (is_truthy(lhs)) {
+      return lhs;
+    }
+  } else {
+    if (!is_truthy(lhs)) {
+      return left;
+    }
+  }
+  return this->evaluate(*exp.right);
+}
+
 std::any interpreter::evaluate(const Expr &exp) const {
   return exp.accept(*this);
 }
 
 std::any interpreter::execute(Stmt &stmt) { return stmt.accept(*this); }
+
+std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
+  // pushing a stack frame
+  this->env.push_frame();
+  try {
+    std::any ret_val{};
+    for (auto &stmt : stmts) {
+      ret_val = this->execute(*stmt);
+    }
+    this->env.pop_frame();
+    return ret_val;
+  } catch (Lox_runtime_err &err) {
+    // popping stack frame
+    this->env.pop_frame();
+    throw std::move(err);
+  }
+}
 
 std::any interpreter::visit_print_stmt(print_stmt &stmt) {
   auto val = this->evaluate(*stmt.expr);
@@ -205,11 +249,36 @@ std::any interpreter::visit_let_stmt(let_stmt &stmt) {
   return val;
 }
 
-void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts) {
+std::any interpreter::visit_block_stmt(block_stmt &stmt) {
+  auto val = this->execute_block(stmt.statements);
+  return val;
+}
+
+std::any interpreter::visit_if_stmt(if_stmt &stmt) {
+  if (is_truthy(this->evaluate(*stmt.condition))) {
+    return this->execute(*stmt.then_branch);
+  }
+  if (stmt.else_branch.has_value()) {
+    return this->execute(*stmt.else_branch.value());
+  }
+  return {};
+}
+
+std::any interpreter::visit_while_stmt(while_stmt &stmt) {
+  while (this->is_truthy(this->evaluate(*stmt.condition))) {
+    this->execute(*stmt.body);
+  }
+  return {};
+}
+
+void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
+                            bool is_repl) {
   try {
     for (auto &stmt : stmts) {
       auto val = this->execute(*stmt);
-      fmt::print("=> {}\n", interpreter::stringify(val));
+      if (is_repl) {
+        fmt::print("=> {}\n", this->stringify(val));
+      }
     }
   } catch (Lox_runtime_err &err) {
     Lox::report_runtime_error(err);

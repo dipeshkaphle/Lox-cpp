@@ -7,6 +7,7 @@ class grouping_expr;
 class literal_expr;
 class variable_expr;
 class assign_expr;
+class logical_expr;
 
 template <typename T> class expr_visitor {
 public:
@@ -16,4 +17,5 @@ public:
   virtual T visit_literal_expr(const literal_expr &exp) const = 0;
   virtual T visit_variable_expr(const variable_expr &exp) const = 0;
   virtual T visit_assign_expr(const assign_expr &exp) const = 0;
+  virtual T visit_logical_expr(const logical_expr &exp) const = 0;
 };

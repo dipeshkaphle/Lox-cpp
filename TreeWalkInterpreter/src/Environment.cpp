@@ -29,3 +29,6 @@ any_or_err Environment::assign(const Token &name, std::any val) const {
   return tl::make_unexpected<Lox_runtime_err>(Lox_runtime_err(
       name, fmt::format("Undefined variable: {}. ", name.lexeme).c_str()));
 }
+
+void Environment::push_frame() { this->sym_table.emplace_back(); }
+void Environment::pop_frame() { this->sym_table.pop_back(); }

@@ -19,13 +19,18 @@ private:
   std::any visit_literal_expr(const literal_expr &exp) const final;
   std::any visit_variable_expr(const variable_expr &exp) const final;
   std::any visit_assign_expr(const assign_expr &exp) const final;
+  std::any visit_logical_expr(const logical_expr &exp) const final;
 
   std::any evaluate(const Expr &exp) const;
   std::any execute(Stmt &stmt);
+  std::any execute_block(vector<std::unique_ptr<Stmt>> &stmts);
 
   std::any visit_print_stmt(print_stmt &stmt) final;
   std::any visit_expr_stmt(expr_stmt &stmt) final;
   std::any visit_let_stmt(let_stmt &stmt) final;
+  std::any visit_block_stmt(block_stmt &stmt) final;
+  std::any visit_if_stmt(if_stmt &stmt) final;
+  std::any visit_while_stmt(while_stmt &stmt) final;
 
   static bool is_truthy(const std::any &val);
   static bool is_equal(const std::any &l, const std::any &r);
@@ -40,5 +45,5 @@ private:
 
 public:
   interpreter() : env() {}
-  void interpret(vector<std::unique_ptr<Stmt>> &stmts);
+  void interpret(vector<std::unique_ptr<Stmt>> &stmts, bool is_repl = false);
 };

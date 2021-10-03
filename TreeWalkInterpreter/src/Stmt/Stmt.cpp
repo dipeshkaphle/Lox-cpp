@@ -1,7 +1,10 @@
 #include "includes/Stmt/Stmt.hpp"
+#include "includes/Stmt/BlockStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
+#include "includes/Stmt/WhileStmt.hpp"
 
 /*
  * =============================================================================
@@ -47,5 +50,60 @@ std::any let_stmt::accept(stmt_visitor<std::any> &visitor) {
 
 /*
  * Let Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Block Statement
+ */
+block_stmt::block_stmt(std::vector<stmt_ptr> stmts)
+    : statements(std::move(stmts)) {}
+block_stmt::block_stmt(block_stmt &&stmt) noexcept
+    : statements(std::move(stmt.statements)) {}
+std::any block_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_block_stmt(*this);
+}
+
+/*
+ * Block Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * If Statement
+ */
+
+if_stmt::if_stmt(std::unique_ptr<Expr> condition_,
+                 std::unique_ptr<Stmt> then_branch_,
+                 std::optional<std::unique_ptr<Stmt>> else_branch_)
+    : condition(std::move(condition_)), then_branch(std::move(then_branch_)),
+      else_branch(std::move(else_branch_)) {}
+
+std::any if_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_if_stmt(*this);
+}
+
+/*
+ * If Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * While Statement
+ */
+
+while_stmt::while_stmt(std::unique_ptr<Expr> condition_,
+                       std::unique_ptr<Stmt> body_)
+    : condition(std::move(condition_)), body(std::move(body_)) {}
+
+std::any while_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_while_stmt(*this);
+}
+
+/*
+ * While Statement End
  *  =============================================================================
  */

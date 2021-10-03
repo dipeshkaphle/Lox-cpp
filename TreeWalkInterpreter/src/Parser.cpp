@@ -1,7 +1,11 @@
 #include "includes/Parser.hpp"
 #include "includes/Lox.hpp"
 
+// TODO : Add break statments
+
+#include <memory>
 #include <ranges>
+#include <vector>
 
 using parse_err = Parser::parse_error;
 using expr_or_err = Parser::expr_or_err;
@@ -73,7 +77,7 @@ Parser::parse_error Parser::error(Token tok, const char *err_msg) {
 expr_or_err Parser::expression() { return this->assignment(); }
 
 expr_or_err Parser::assignment() {
-  auto maybe_expr = this->equality();
+  auto maybe_expr = this->logic_or();
   RETURN_IF_NO_VALUE(maybe_expr);
   if (match({TokenType::EQUAL})) {
     auto equals = previous();
@@ -90,6 +94,34 @@ expr_or_err Parser::assignment() {
     }
   }
   return maybe_expr;
+}
+
+expr_or_err Parser::logic_or() {
+  auto maybe_lhs = this->logic_and();
+  RETURN_IF_NO_VALUE(maybe_lhs);
+  while (match({TokenType::OR})) {
+    auto op = this->previous();
+    auto maybe_rhs = this->logic_and();
+    RETURN_IF_NO_VALUE(maybe_rhs);
+    maybe_lhs = std::make_unique<logical_expr>(std::move(op),
+                                               std::move(maybe_lhs.value()),
+                                               std::move(maybe_rhs.value()));
+  }
+  return maybe_lhs;
+}
+
+expr_or_err Parser::logic_and() {
+  auto maybe_lhs = this->equality();
+  RETURN_IF_NO_VALUE(maybe_lhs);
+  while (match({TokenType::AND})) {
+    auto op = this->previous();
+    auto maybe_rhs = this->equality();
+    RETURN_IF_NO_VALUE(maybe_rhs);
+    maybe_lhs = std::make_unique<logical_expr>(std::move(op),
+                                               std::move(maybe_lhs.value()),
+                                               std::move(maybe_rhs.value()));
+  }
+  return maybe_lhs;
 }
 
 expr_or_err Parser::equality() {
@@ -210,10 +242,161 @@ expr_or_err Parser::primary() {
 }
 
 stmt_or_err Parser::statement() {
+  if (this->match({TokenType::IF})) {
+    return if_statement();
+  }
+  if (this->match({TokenType::WHILE})) {
+    return this->while_statement();
+  }
+  if (this->match({TokenType::FOR})) {
+    return this->for_statement();
+  }
   if (this->match({TokenType::PRINT})) {
     return this->print_statement();
   }
+  if (this->match({TokenType::LEFT_BRACE})) {
+    auto maybe_stmts = this->block();
+    RETURN_IF_NO_VALUE(maybe_stmts);
+    return std::make_unique<block_stmt>(std::move(maybe_stmts.value()));
+  }
   return this->expression_statement();
+}
+
+tl::expected<std::vector<stmt_ptr>, parse_err> Parser::block() {
+  vector<stmt_ptr> stmts;
+  while (!check(TokenType::RIGHT_BRACE) && !this->is_at_end()) {
+    auto maybe_declr = this->declaration();
+    RETURN_IF_NO_VALUE(maybe_declr);
+    stmts.emplace_back(std::move(maybe_declr.value()));
+  }
+  auto maybe_right_brace =
+      consume(TokenType::RIGHT_BRACE, "Expect } after block");
+  RETURN_IF_NO_VALUE(maybe_right_brace);
+  return stmts;
+}
+
+stmt_or_err Parser::if_statement() {
+  auto maybe_leftparen = consume(TokenType::LEFT_PAREN, "Expect ( after if");
+  RETURN_IF_NO_VALUE(maybe_leftparen);
+  auto maybe_cond = this->expression();
+  RETURN_IF_NO_VALUE(maybe_cond);
+  auto maybe_right_paren =
+      consume(TokenType::RIGHT_PAREN, "Expect ) after if condition");
+  RETURN_IF_NO_VALUE(maybe_right_paren);
+  auto maybe_then_branch = this->statement();
+  RETURN_IF_NO_VALUE(maybe_then_branch);
+  if (match({TokenType::ELSE})) {
+    auto maybe_else_branch = this->statement();
+    RETURN_IF_NO_VALUE(maybe_else_branch);
+    return (stmt_ptr)std::make_unique<if_stmt>(
+        std::move(maybe_cond.value()), std::move(maybe_then_branch.value()),
+        std::move(maybe_else_branch.value()));
+  }
+  return (stmt_ptr)std::make_unique<if_stmt>(
+      std::move(maybe_cond.value()), std::move(maybe_then_branch.value()));
+}
+
+stmt_or_err Parser::while_statement() {
+  auto maybe_leftparen = consume(TokenType::LEFT_PAREN, "Expect ( after while");
+  RETURN_IF_NO_VALUE(maybe_leftparen);
+  auto maybe_cond = this->expression();
+  RETURN_IF_NO_VALUE(maybe_cond);
+  auto maybe_right_paren =
+      consume(TokenType::RIGHT_PAREN, "Expect ) after while condition");
+  RETURN_IF_NO_VALUE(maybe_right_paren);
+  auto maybe_body = this->statement();
+  RETURN_IF_NO_VALUE(maybe_body);
+  return (stmt_ptr)std::make_unique<while_stmt>(std::move(maybe_cond.value()),
+                                                std::move(maybe_body.value()));
+}
+
+stmt_or_err Parser::for_statement() {
+  /*
+   * for( <stmt1>; <expression> ; <expression>) <block>
+   */
+
+  /*
+   * LEFT_PAREN
+   */
+  auto maybe_leftparen = consume(TokenType::LEFT_PAREN, "Expect ( after for");
+  RETURN_IF_NO_VALUE(maybe_leftparen);
+
+  /*
+   * <stmt1>
+   */
+  std::optional<stmt_ptr> maybe_initializer = std::nullopt;
+  if (this->match({TokenType::SEMICOLON})) {
+  } else if (this->match({TokenType::LET})) {
+    auto maybe_declr = this->let_declaration();
+    RETURN_IF_NO_VALUE(maybe_declr);
+    maybe_initializer = std::move(maybe_declr.value());
+  } else {
+    auto maybe_stmt = this->expression_statement();
+    RETURN_IF_NO_VALUE(maybe_stmt);
+    maybe_initializer = std::move(maybe_stmt.value());
+  }
+
+  /*
+   * <expression>
+   * Its an expression statement
+   */
+  std::optional<expr_ptr> maybe_condition = std::nullopt;
+  if (!this->check(TokenType::SEMICOLON)) {
+    auto maybe_expr_stmt = this->expression();
+    RETURN_IF_NO_VALUE(maybe_expr_stmt);
+    maybe_condition = std::move(maybe_expr_stmt.value());
+  }
+  auto maybe_semicolon =
+      consume(TokenType::SEMICOLON, "Expect ; after conditional in for ");
+  RETURN_IF_NO_VALUE(maybe_semicolon);
+
+  /*
+   * <expression>
+   */
+  std::optional<stmt_ptr> maybe_change_fn;
+  if (!check(TokenType::RIGHT_PAREN)) {
+    auto maybe_change_expr = this->expression();
+    RETURN_IF_NO_VALUE(maybe_change_expr);
+    maybe_change_fn = (stmt_ptr)std::make_unique<expr_stmt>(
+        std::move(maybe_change_expr.value()));
+  }
+
+  /*
+   * RIGHT_PAREN
+   */
+  auto maybe_right_paren = consume(
+      TokenType::RIGHT_PAREN, "Expect closing paren ')' after for clauses");
+  RETURN_IF_NO_VALUE(maybe_right_paren);
+
+  /*
+   * <block>
+   */
+  auto maybe_body = this->statement();
+  RETURN_IF_NO_VALUE(maybe_body);
+
+  if (maybe_change_fn.has_value()) {
+    std::array<stmt_ptr, 2> stmts = {std::move(maybe_body.value()),
+                                     std::move(maybe_change_fn.value())};
+    auto stmts_in_new_body = vector<stmt_ptr>(make_move_iterator(stmts.begin()),
+                                              make_move_iterator(stmts.end()));
+    maybe_body = std::make_unique<block_stmt>(std::move(stmts_in_new_body));
+  }
+
+  if (!maybe_condition.has_value()) {
+    maybe_condition = std::make_unique<literal_expr>(true);
+  }
+
+  maybe_body = std::make_unique<while_stmt>(std::move(maybe_condition.value()),
+                                            std::move(maybe_body.value()));
+
+  if (maybe_initializer.has_value()) {
+    std::array<stmt_ptr, 2> stmts = {std::move(maybe_initializer.value()),
+                                     std::move(maybe_body.value())};
+    auto stmts_in_new_body = vector<stmt_ptr>(make_move_iterator(stmts.begin()),
+                                              make_move_iterator(stmts.end()));
+    maybe_body = std::make_unique<block_stmt>(std::move(stmts_in_new_body));
+  }
+  return maybe_body;
 }
 
 stmt_or_err Parser::print_statement() {

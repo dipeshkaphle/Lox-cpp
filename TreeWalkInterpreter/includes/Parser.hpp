@@ -9,12 +9,16 @@
 #include "Expr/binary_expr.hpp"
 #include "Expr/grouping_expr.hpp"
 #include "Expr/literal_expr.hpp"
+#include "Expr/logical_expr.hpp"
 #include "Expr/unary_expr.hpp"
 #include "Expr/variable_expr.hpp"
+#include "Stmt/BlockStmt.hpp"
 #include "Stmt/ExprStmt.hpp"
+#include "Stmt/IfStmt.hpp"
 #include "Stmt/LetStmt.hpp"
 #include "Stmt/PrintStmt.hpp"
 #include "Stmt/Stmt.hpp"
+#include "Stmt/WhileStmt.hpp"
 #include "Token.hpp"
 #include "TokenTypes.hpp"
 
@@ -28,8 +32,11 @@ using namespace std;
  *
  *
  *  expression     → assignment ;
+ *
  *  assignment     → IDENTIFIER "=" assignment
- *                 | equality ;
+ *                 | logic_or ;
+ *  logic_or       → logic_and ( "or" logic_and )* ;
+ *  logic_and      → equality ( "and" equality )* ;
  *	equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  *	comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  *	term           → factor ( ( "-" | "+" ) factor )* ;
@@ -74,6 +81,8 @@ private:
 
   expr_or_err expression();
   expr_or_err assignment();
+  expr_or_err logic_or();
+  expr_or_err logic_and();
   expr_or_err equality();
   expr_or_err comparision();
   expr_or_err term();
@@ -86,6 +95,10 @@ private:
   stmt_or_err print_statement();
   stmt_or_err declaration();
   stmt_or_err let_declaration();
+  stmt_or_err if_statement();
+  stmt_or_err while_statement();
+  stmt_or_err for_statement();
+  tl::expected<vector<stmt_ptr>, parse_error> block();
 
   static parse_error error(Token tok, const char *err_msg);
 
