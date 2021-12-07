@@ -299,12 +299,12 @@ std::any interpreter::visit_break_stmt(break_stmt &_stmt) {
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
                             bool is_repl) {
   try {
-    for (auto &stmt : stmts) {
+    std::ranges::for_each(stmts, [&](auto &stmt) {
       auto val = this->execute(*stmt);
       if (is_repl) {
         fmt::print("=> {}\n", this->stringify(val));
       }
-    }
+    });
   } catch (Lox_runtime_err &err) {
     Lox::report_runtime_error(err);
   }

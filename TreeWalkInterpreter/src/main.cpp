@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <numeric>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -28,9 +29,8 @@ void run(const string &source, bool is_repl = false) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
 
-  // for (Token token : tokens) {
-  // std::cout << token.to_string() << endl;
-  // }
+  // std::ranges::for_each(tokens,
+  // [](auto &x) { fmt::print("{}\n", x.to_string()); });
 
   Parser parser(tokens);
 
@@ -41,9 +41,9 @@ void run(const string &source, bool is_repl = false) {
   }
   vector<std::unique_ptr<Stmt>> statements;
   statements.reserve(maybe_statements.size());
-  for (auto &maybe_stmt : maybe_statements) {
+  std::ranges::for_each(maybe_statements, [&](auto &maybe_stmt) {
     statements.emplace_back(std::move(maybe_stmt.value()));
-  }
+  });
   Lox::interp.interpret(statements, is_repl);
 }
 
@@ -51,13 +51,8 @@ void runFile(char *filename) {
   std::ifstream inp(filename);
 
   if (inp.is_open()) {
-    string all_code;
-    string tmp;
-    while (std::getline(inp, tmp)) {
-      all_code.append(tmp);
-      all_code.push_back('\n');
-    }
-    // cout << all_code << '\n';
+    string all_code((std::istreambuf_iterator<char>(inp)),
+                    (std::istreambuf_iterator<char>()));
     try {
       run(all_code, false);
     } catch (std::exception &e) {
@@ -93,19 +88,6 @@ void runPrompt() {
     Lox::hadError = false;
   }
 }
-
-/*
- * void f() {
- *   std::unique_ptr<Expr> lhs = std::make_unique<literal_expr>(double(-123));
- *   std::unique_ptr<Expr> lit = std::make_unique<literal_expr>(double(45.67));
- *   std::unique_ptr<Expr> rhs =
- * std::make_unique<grouping_expr>(std::move(lit)); std::unique_ptr<Expr>
- * bin_exp = std::make_unique<binary_expr>( Token(TokenType::PLUS, "+",
- * std::string("+"), 0), std::move(lhs), std::move(rhs)); auto ast =
- * ast_printer(); cout << ast.print(*bin_exp) << '\n'; auto litrl_bool =
- * literal_expr(true); cout << ast.print(litrl_bool) << '\n';
- * }
- */
 
 int main(int argc, char **argv) {
   if (argc > 2) {
