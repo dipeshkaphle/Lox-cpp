@@ -49,6 +49,7 @@ enum class TokenType {
   TRUE,
   LET,
   WHILE,
+  BREAK,
   ENDOFFILE
 };
 
@@ -93,6 +94,7 @@ inline std::string type_to_string(TokenType type) {
       {TokenType::TRUE, "TRUE"},
       {TokenType::LET, "LET"},
       {TokenType::WHILE, "WHILE"},
+      {TokenType::BREAK, "BREAK"},
       {TokenType::ENDOFFILE, "EOF"}};
   return to_str[type];
 }

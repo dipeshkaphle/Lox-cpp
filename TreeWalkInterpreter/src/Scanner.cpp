@@ -7,7 +7,7 @@ const unordered_map<string, TokenType> Scanner::keywords = {
     {"for", tok::FOR},     {"fn", tok::FN},       {"if", tok::IF},
     {"nil", tok::NIL},     {"print", tok::PRINT}, {"return", tok::RETURN},
     {"super", tok::SUPER}, {"this", tok::THIS},   {"let", tok::LET},
-    {"while", tok::WHILE}};
+    {"while", tok::WHILE}, {"break", tok::BREAK}};
 
 char Scanner::peek() {
   if (is_at_end()) {

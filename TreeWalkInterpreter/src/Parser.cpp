@@ -251,6 +251,9 @@ stmt_or_err Parser::statement() {
   if (this->match({TokenType::FOR})) {
     return this->for_statement();
   }
+  if (this->match({TokenType::BREAK})) {
+    return this->break_statement();
+  }
   if (this->match({TokenType::PRINT})) {
     return this->print_statement();
   }
@@ -275,6 +278,17 @@ tl::expected<std::vector<stmt_ptr>, parse_err> Parser::block() {
   return stmts;
 }
 
+stmt_or_err Parser::break_statement() {
+  if (this->loop_nesting_count > 0) {
+    RETURN_IF_NO_VALUE(
+        consume(TokenType::SEMICOLON, "Expected ; after a 'break'"));
+    return (stmt_ptr)std::make_unique<break_stmt>();
+  }
+  return tl::make_unexpected<parse_err>(this->error(
+      this->peek(),
+      "Break statement is not inside any form of loop. This is not valid"));
+}
+
 stmt_or_err Parser::if_statement() {
   auto maybe_leftparen = consume(TokenType::LEFT_PAREN, "Expect ( after if");
   RETURN_IF_NO_VALUE(maybe_leftparen);
@@ -297,6 +311,8 @@ stmt_or_err Parser::if_statement() {
 }
 
 stmt_or_err Parser::while_statement() {
+  // in a loop
+  this->loop_nesting_count++;
   auto maybe_leftparen = consume(TokenType::LEFT_PAREN, "Expect ( after while");
   RETURN_IF_NO_VALUE(maybe_leftparen);
   auto maybe_cond = this->expression();
@@ -305,6 +321,8 @@ stmt_or_err Parser::while_statement() {
       consume(TokenType::RIGHT_PAREN, "Expect ) after while condition");
   RETURN_IF_NO_VALUE(maybe_right_paren);
   auto maybe_body = this->statement();
+  // going out of loop
+  this->loop_nesting_count--;
   RETURN_IF_NO_VALUE(maybe_body);
   return (stmt_ptr)std::make_unique<while_stmt>(std::move(maybe_cond.value()),
                                                 std::move(maybe_body.value()));
@@ -368,10 +386,15 @@ stmt_or_err Parser::for_statement() {
       TokenType::RIGHT_PAREN, "Expect closing paren ')' after for clauses");
   RETURN_IF_NO_VALUE(maybe_right_paren);
 
+  this->loop_nesting_count++;
+  // in a loop
+
   /*
    * <block>
    */
   auto maybe_body = this->statement();
+  // outta loop
+  this->loop_nesting_count--;
   RETURN_IF_NO_VALUE(maybe_body);
 
   if (maybe_change_fn.has_value()) {

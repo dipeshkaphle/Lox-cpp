@@ -29,7 +29,7 @@ void run(const string &source, bool is_repl = false) {
   std::vector<Token> tokens = scanner.scan_tokens();
 
   // for (Token token : tokens) {
-  // std::cout << token.to_string() << '\n';
+  // std::cout << token.to_string() << endl;
   // }
 
   Parser parser(tokens);

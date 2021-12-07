@@ -222,6 +222,18 @@ std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
     std::any ret_val{};
     for (auto &stmt : stmts) {
       ret_val = this->execute(*stmt);
+      /*
+       * This can only ever be true when we are executing  a block inside
+       * a loop
+       *
+       * My reasoning behind that is no break statement can be inside a block
+       * that is not a block of a while loop or for loop, because I'm
+       * considering that as a parse error, meaning the program cant get to
+       * evaluation stage at all if the break was not inside a loop.
+       */
+      if (this->break_from_current_loop) {
+        break;
+      }
     }
     this->env.pop_frame();
     return ret_val;
@@ -267,8 +279,21 @@ std::any interpreter::visit_if_stmt(if_stmt &stmt) {
 std::any interpreter::visit_while_stmt(while_stmt &stmt) {
   while (this->is_truthy(this->evaluate(*stmt.condition))) {
     this->execute(*stmt.body);
+    if (this->break_from_current_loop) {
+      this->break_from_current_loop = false;
+      break;
+    }
   }
   return {};
+}
+
+std::any interpreter::visit_break_stmt(break_stmt &_stmt) {
+  this->break_from_current_loop = true;
+  return {};
+  // while (this->is_truthy(this->evaluate(*stmt.condition))) {
+  // this->execute(*stmt.body);
+  // }
+  // return {};
 }
 
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,

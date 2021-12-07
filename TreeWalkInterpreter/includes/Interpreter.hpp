@@ -31,6 +31,7 @@ private:
   std::any visit_block_stmt(block_stmt &stmt) final;
   std::any visit_if_stmt(if_stmt &stmt) final;
   std::any visit_while_stmt(while_stmt &stmt) final;
+  std::any visit_break_stmt(break_stmt &stmt) final;
 
   static bool is_truthy(const std::any &val);
   static bool is_equal(const std::any &l, const std::any &r);
@@ -41,9 +42,10 @@ private:
   check_number_operands(const Token &tok,
                         std::array<std::reference_wrapper<std::any>, N>);
 
-  Environment env;
+  Environment env{};
+  bool break_from_current_loop{};
 
 public:
-  interpreter() : env() {}
+  interpreter() = default;
   void interpret(vector<std::unique_ptr<Stmt>> &stmts, bool is_repl = false);
 };

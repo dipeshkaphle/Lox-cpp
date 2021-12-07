@@ -1,5 +1,6 @@
 #include "includes/Stmt/Stmt.hpp"
 #include "includes/Stmt/BlockStmt.hpp"
+#include "includes/Stmt/BreakStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
@@ -105,5 +106,19 @@ std::any while_stmt::accept(stmt_visitor<std::any> &visitor) {
 
 /*
  * While Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Break Statement
+ */
+
+break_stmt::break_stmt() = default;
+std::any break_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_break_stmt(*this);
+};
+/*
+ * Break Statement End
  *  =============================================================================
  */

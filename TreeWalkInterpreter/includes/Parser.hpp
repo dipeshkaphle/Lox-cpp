@@ -13,6 +13,7 @@
 #include "Expr/unary_expr.hpp"
 #include "Expr/variable_expr.hpp"
 #include "Stmt/BlockStmt.hpp"
+#include "Stmt/BreakStmt.hpp"
 #include "Stmt/ExprStmt.hpp"
 #include "Stmt/IfStmt.hpp"
 #include "Stmt/LetStmt.hpp"
@@ -61,7 +62,8 @@ public:
 
 private:
   vector<Token> tokens;
-  int cur = 0;
+  int cur{0};
+  int loop_nesting_count{0};
 
   bool check(TokenType tk);
 
@@ -91,6 +93,7 @@ private:
   expr_or_err primary();
 
   stmt_or_err statement();
+  stmt_or_err break_statement();
   stmt_or_err expression_statement();
   stmt_or_err print_statement();
   stmt_or_err declaration();
