@@ -1,8 +1,6 @@
 #include "includes/Parser.hpp"
 #include "includes/Lox.hpp"
 
-// TODO : Add break statments
-
 #include <memory>
 #include <ranges>
 #include <vector>
@@ -254,6 +252,9 @@ stmt_or_err Parser::statement() {
   if (this->match({TokenType::BREAK})) {
     return this->break_statement();
   }
+  if (this->match({TokenType::CONTINUE})) {
+    return this->continue_statement();
+  }
   if (this->match({TokenType::PRINT})) {
     return this->print_statement();
   }
@@ -287,6 +288,16 @@ stmt_or_err Parser::break_statement() {
   return tl::make_unexpected<parse_err>(this->error(
       this->peek(),
       "Break statement is not inside any form of loop. This is not valid"));
+}
+stmt_or_err Parser::continue_statement() {
+  if (this->loop_nesting_count > 0) {
+    RETURN_IF_NO_VALUE(
+        consume(TokenType::SEMICOLON, "Expected ; after a 'break'"));
+    return (stmt_ptr)std::make_unique<continue_stmt>();
+  }
+  return tl::make_unexpected<parse_err>(this->error(
+      this->peek(),
+      "Continue statement is not inside any form of loop. This is not valid"));
 }
 
 stmt_or_err Parser::if_statement() {
@@ -397,20 +408,13 @@ stmt_or_err Parser::for_statement() {
   this->loop_nesting_count--;
   RETURN_IF_NO_VALUE(maybe_body);
 
-  if (maybe_change_fn.has_value()) {
-    std::array<stmt_ptr, 2> stmts = {std::move(maybe_body.value()),
-                                     std::move(maybe_change_fn.value())};
-    auto stmts_in_new_body = vector<stmt_ptr>(make_move_iterator(stmts.begin()),
-                                              make_move_iterator(stmts.end()));
-    maybe_body = std::make_unique<block_stmt>(std::move(stmts_in_new_body));
-  }
-
   if (!maybe_condition.has_value()) {
     maybe_condition = std::make_unique<literal_expr>(true);
   }
 
   maybe_body = std::make_unique<while_stmt>(std::move(maybe_condition.value()),
-                                            std::move(maybe_body.value()));
+                                            std::move(maybe_body.value()),
+                                            move(maybe_change_fn));
 
   if (maybe_initializer.has_value()) {
     std::array<stmt_ptr, 2> stmts = {std::move(maybe_initializer.value()),

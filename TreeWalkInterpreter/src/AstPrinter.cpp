@@ -2,7 +2,7 @@
 
 std::string ast_printer::parenthesize(std::string name,
                                       const Expr &expr) const {
-  std::string str = "";
+  std::string str;
   str.append("( ").append(name);
   str.append(" ");
   str.append(this->print(expr));
@@ -12,7 +12,7 @@ std::string ast_printer::parenthesize(std::string name,
 
 std::string ast_printer::parenthesize(std::string name, const Expr &expr1,
                                       const Expr &expr2) const {
-  std::string str = "";
+  std::string str{};
   str.append("( ").append(name);
   str.append(" ");
   str.append(this->print(expr1));

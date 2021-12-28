@@ -29,8 +29,10 @@ void run(const string &source, bool is_repl = false) {
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scan_tokens();
 
-  // std::ranges::for_each(tokens,
-  // [](auto &x) { fmt::print("{}\n", x.to_string()); });
+#ifdef DEBUG
+  std::ranges::for_each(tokens,
+                        [](auto &x) { fmt::print("{}\n", x.to_string()); });
+#endif
 
   Parser parser(tokens);
 

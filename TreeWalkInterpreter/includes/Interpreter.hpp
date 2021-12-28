@@ -32,6 +32,7 @@ private:
   std::any visit_if_stmt(if_stmt &stmt) final;
   std::any visit_while_stmt(while_stmt &stmt) final;
   std::any visit_break_stmt(break_stmt &stmt) final;
+  std::any visit_continue_stmt(continue_stmt &stmt) final;
 
   static bool is_truthy(const std::any &val);
   static bool is_equal(const std::any &l, const std::any &r);
@@ -44,6 +45,7 @@ private:
 
   Environment env{};
   bool break_from_current_loop{};
+  bool continue_loop{};
 
 public:
   interpreter() = default;

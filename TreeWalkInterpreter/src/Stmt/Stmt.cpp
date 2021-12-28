@@ -1,6 +1,7 @@
 #include "includes/Stmt/Stmt.hpp"
 #include "includes/Stmt/BlockStmt.hpp"
 #include "includes/Stmt/BreakStmt.hpp"
+#include "includes/Stmt/ContinueStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
@@ -97,8 +98,10 @@ std::any if_stmt::accept(stmt_visitor<std::any> &visitor) {
  */
 
 while_stmt::while_stmt(std::unique_ptr<Expr> condition_,
-                       std::unique_ptr<Stmt> body_)
-    : condition(std::move(condition_)), body(std::move(body_)) {}
+                       std::unique_ptr<Stmt> body_,
+                       std::optional<std::unique_ptr<Stmt>> change_fn_)
+    : condition(std::move(condition_)), body(std::move(body_)),
+      change_fn(move(change_fn_)) {}
 
 std::any while_stmt::accept(stmt_visitor<std::any> &visitor) {
   return visitor.visit_while_stmt(*this);
@@ -120,5 +123,19 @@ std::any break_stmt::accept(stmt_visitor<std::any> &visitor) {
 };
 /*
  * Break Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Continue Statement
+ */
+
+continue_stmt::continue_stmt() = default;
+std::any continue_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_continue_stmt(*this);
+};
+/*
+ * Continue Statement End
  *  =============================================================================
  */

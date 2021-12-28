@@ -1,3 +1,4 @@
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 add_library(Lox STATIC)
 # target_link_libraries(Lox PRIVATE ${CONAN_LIBS})
 set(CMAKE_CXX_STANDARD 20)

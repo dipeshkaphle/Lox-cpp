@@ -231,7 +231,7 @@ std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
        * considering that as a parse error, meaning the program cant get to
        * evaluation stage at all if the break was not inside a loop.
        */
-      if (this->break_from_current_loop) {
+      if (this->break_from_current_loop || this->continue_loop) {
         break;
       }
     }
@@ -283,17 +283,26 @@ std::any interpreter::visit_while_stmt(while_stmt &stmt) {
       this->break_from_current_loop = false;
       break;
     }
+    if (stmt.change_fn.has_value()) {
+      this->execute(*stmt.change_fn.value());
+    }
+    if (this->continue_loop) {
+      this->continue_loop = false;
+      continue;
+    }
   }
   return {};
 }
 
-std::any interpreter::visit_break_stmt(break_stmt &_stmt) {
+std::any interpreter::visit_break_stmt([[maybe_unused]] break_stmt &_stmt) {
   this->break_from_current_loop = true;
   return {};
-  // while (this->is_truthy(this->evaluate(*stmt.condition))) {
-  // this->execute(*stmt.body);
-  // }
-  // return {};
+}
+
+std::any
+interpreter::visit_continue_stmt([[maybe_unused]] continue_stmt &_stmt) {
+  this->continue_loop = true;
+  return {};
 }
 
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
