@@ -7,6 +7,7 @@
 #include "Expr/Expr.hpp"
 #include "Expr/assign_expr.hpp"
 #include "Expr/binary_expr.hpp"
+#include "Expr/call_expr.hpp"
 #include "Expr/grouping_expr.hpp"
 #include "Expr/literal_expr.hpp"
 #include "Expr/logical_expr.hpp"
@@ -43,8 +44,9 @@ using namespace std;
  *	comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  *	term           → factor ( ( "-" | "+" ) factor )* ;
  *	factor         → unary ( ( "/" | "*" ) unary )* ;
- *	unary          → ( "!" | "-" ) unary
- *								 | primary ;
+ *	unary          → ( "!" | "-" ) unary | call;
+ *	call           → primary ( "(" arguments? ")" )*;
+ *	arguments      → expression ( "," expression )* ;
  *	primary        → NUMBER | STRING | "true" | "false" | "nil"
  *					       | "(" expression ")"
  *;
@@ -91,6 +93,7 @@ private:
   expr_or_err term();
   expr_or_err factor();
   expr_or_err unary();
+  expr_or_err call();
   expr_or_err primary();
 
   stmt_or_err statement();
@@ -110,4 +113,5 @@ private:
 public:
   explicit Parser(vector<Token> _toks) : tokens(move(_toks)), cur(0) {}
   vector<stmt_or_err> parse();
+  expr_or_err finish_call(unique_ptr<Expr> callee);
 };

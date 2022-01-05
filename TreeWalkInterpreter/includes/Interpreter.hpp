@@ -6,6 +6,7 @@
 #include "Stmt/StmtVisitor.hpp"
 #include "includes/Expr/Expr.hpp"
 #include "includes/Token.hpp"
+#include "includes/globals.hpp"
 
 #include <any>
 #include <array>
@@ -13,15 +14,16 @@
 
 class interpreter : public expr_visitor<std::any>, stmt_visitor<std::any> {
 private:
-  std::any visit_binary_expr(const binary_expr &exp) const final;
-  std::any visit_unary_expr(const unary_expr &exp) const final;
-  std::any visit_grouping_expr(const grouping_expr &exp) const final;
-  std::any visit_literal_expr(const literal_expr &exp) const final;
-  std::any visit_variable_expr(const variable_expr &exp) const final;
-  std::any visit_assign_expr(const assign_expr &exp) const final;
-  std::any visit_logical_expr(const logical_expr &exp) const final;
+  std::any visit_binary_expr(binary_expr &exp) final;
+  std::any visit_unary_expr(unary_expr &exp) final;
+  std::any visit_grouping_expr(grouping_expr &exp) final;
+  std::any visit_literal_expr(literal_expr &exp) final;
+  std::any visit_variable_expr(variable_expr &exp) final;
+  std::any visit_assign_expr(assign_expr &exp) final;
+  std::any visit_logical_expr(logical_expr &exp) final;
+  std::any visit_call_expr(call_expr &exp) final;
 
-  std::any evaluate(const Expr &exp) const;
+  std::any evaluate(Expr &exp);
   std::any execute(Stmt &stmt);
   std::any execute_block(vector<std::unique_ptr<Stmt>> &stmts);
 
@@ -48,6 +50,6 @@ private:
   bool continue_loop{};
 
 public:
-  interpreter() = default;
+  interpreter() { this->env = GlobalEnv::init(); }
   void interpret(vector<std::unique_ptr<Stmt>> &stmts, bool is_repl = false);
 };

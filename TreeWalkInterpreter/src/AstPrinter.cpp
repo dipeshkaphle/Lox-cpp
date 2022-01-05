@@ -1,7 +1,6 @@
 #include "includes/AstPrinter.hpp"
 
-std::string ast_printer::parenthesize(std::string name,
-                                      const Expr &expr) const {
+std::string ast_printer::parenthesize(std::string name, Expr &expr) {
   std::string str;
   str.append("( ").append(name);
   str.append(" ");
@@ -10,8 +9,8 @@ std::string ast_printer::parenthesize(std::string name,
   return str;
 }
 
-std::string ast_printer::parenthesize(std::string name, const Expr &expr1,
-                                      const Expr &expr2) const {
+std::string ast_printer::parenthesize(std::string name, Expr &expr1,
+                                      Expr &expr2) {
   std::string str{};
   str.append("( ").append(name);
   str.append(" ");
@@ -22,27 +21,27 @@ std::string ast_printer::parenthesize(std::string name, const Expr &expr1,
   return str;
 }
 
-std::string ast_printer::print(const Expr &expr) const {
+std::string ast_printer::print(Expr &expr) {
   return std::any_cast<std::string>(expr.accept(*this));
 }
 
-std::any ast_printer::visit_binary_expr(const binary_expr &expr) const {
+std::any ast_printer::visit_binary_expr(binary_expr &expr) {
   return this->parenthesize(expr.op.lexeme, *expr.left, *expr.right);
 }
 
-std::any ast_printer::visit_unary_expr(const unary_expr &expr) const {
+std::any ast_printer::visit_unary_expr(unary_expr &expr) {
   return parenthesize(expr.op.lexeme, *expr.right);
 }
 
-std::any ast_printer::visit_grouping_expr(const grouping_expr &expr) const {
+std::any ast_printer::visit_grouping_expr(grouping_expr &expr) {
   return parenthesize("group", *expr.expression);
 }
 
-std::any ast_printer::visit_variable_expr(const variable_expr &exp) const {
+std::any ast_printer::visit_variable_expr(variable_expr &exp) {
   return exp.name.lexeme;
 }
 
-std::any ast_printer::visit_literal_expr(const literal_expr &expr) const {
+std::any ast_printer::visit_literal_expr(literal_expr &expr) {
   if (!expr.value.has_value())
     return std::string("nil");
   if (expr.value.type() == typeid(double)) {

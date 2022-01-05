@@ -13,5 +13,5 @@ struct variable_expr : public Expr {
 
   variable_expr(Token _name) : name(move(_name)) {}
 
-  std::any accept(const expr_visitor<std::any> &visitor) const override;
+  std::any accept(expr_visitor<std::any> &visitor) override;
 };

@@ -19,7 +19,7 @@ void Environment::define(const std::string &name, std::any val) {
   this->sym_table.back()[name] = std::move(val);
 }
 
-any_or_err Environment::assign(const Token &name, std::any val) const {
+any_or_err Environment::assign(const Token &name, std::any val) {
   for (auto &table : this->sym_table | std::ranges::views::reverse) {
     if (table.contains(name.lexeme)) {
       table[name.lexeme] = std::move(val);

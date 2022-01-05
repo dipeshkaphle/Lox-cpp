@@ -13,5 +13,5 @@ struct literal_expr : public Expr {
 
   literal_expr(std::any &&val) : value(move(val)) {}
 
-  std::any accept(const expr_visitor<std::any> &visitor) const override;
+  std::any accept(expr_visitor<std::any> &visitor) override;
 } __attribute__((aligned(16)));

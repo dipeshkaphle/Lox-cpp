@@ -16,8 +16,7 @@ using map_type = std::unordered_map<std::string, std::any>;
 
 class Environment {
 private:
-  // dont make it mutable lol
-  mutable std::vector<map_type> sym_table;
+  std::vector<map_type> sym_table;
 
 public:
   Environment() : sym_table(1, map_type()) {}
@@ -25,8 +24,5 @@ public:
   void define(const std::string &name, std::any val);
   void push_frame();
   void pop_frame();
-
-  // because the sym_table is mutable, this can be const despite the fact that
-  // ill be mutating sym_table
-  any_or_err assign(const Token &name, std::any val) const;
+  any_or_err assign(const Token &name, std::any val);
 };

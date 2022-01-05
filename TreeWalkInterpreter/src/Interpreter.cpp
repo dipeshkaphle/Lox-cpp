@@ -1,6 +1,8 @@
 #include "includes/Interpreter.hpp"
+#include "includes/Callable.hpp"
 #include "includes/Expr/assign_expr.hpp"
 #include "includes/Expr/binary_expr.hpp"
+#include "includes/Expr/call_expr.hpp"
 #include "includes/Expr/grouping_expr.hpp"
 #include "includes/Expr/literal_expr.hpp"
 #include "includes/Expr/logical_expr.hpp"
@@ -17,6 +19,8 @@
 #include "includes/runtime_err.hpp"
 
 #include "fmt/core.h"
+
+#include "algorithm"
 
 // TODO : Make all the visit expr and visit stmt return tl::expected<any,Err>
 
@@ -88,7 +92,7 @@ bool interpreter::is_equal(const std::any &l, const std::any &r) {
   return false;
 }
 
-std::any interpreter::visit_binary_expr(const binary_expr &exp) const {
+std::any interpreter::visit_binary_expr(binary_expr &exp) {
   std::any left = this->evaluate(*exp.left);
   std::any right = this->evaluate(*exp.right);
   switch (exp.op.type) {
@@ -136,7 +140,7 @@ std::any interpreter::visit_binary_expr(const binary_expr &exp) const {
   return {};
 }
 
-std::any interpreter::visit_unary_expr(const unary_expr &exp) const {
+std::any interpreter::visit_unary_expr(unary_expr &exp) {
   std::any right = this->evaluate(*exp.right);
   switch (exp.op.type) {
   case TokenType::MINUS:
@@ -149,15 +153,15 @@ std::any interpreter::visit_unary_expr(const unary_expr &exp) const {
   return {};
 }
 
-std::any interpreter::visit_grouping_expr(const grouping_expr &exp) const {
+std::any interpreter::visit_grouping_expr(grouping_expr &exp) {
   return this->evaluate(*exp.expression);
 }
 
-std::any interpreter::visit_literal_expr(const literal_expr &exp) const {
+std::any interpreter::visit_literal_expr(literal_expr &exp) {
   return exp.value;
 }
 
-std::any interpreter::visit_variable_expr(const variable_expr &exp) const {
+std::any interpreter::visit_variable_expr(variable_expr &exp) {
   auto maybe_val = this->env.get(exp.name);
   /*
    *
@@ -171,7 +175,7 @@ std::any interpreter::visit_variable_expr(const variable_expr &exp) const {
   throw move(maybe_val.error());
 }
 
-std::any interpreter::visit_assign_expr(const assign_expr &exp) const {
+std::any interpreter::visit_assign_expr(assign_expr &exp) {
   auto val = this->evaluate(*exp.value);
   auto res = this->env.assign(exp.name, val);
   /*
@@ -186,7 +190,7 @@ std::any interpreter::visit_assign_expr(const assign_expr &exp) const {
   throw move(res.error());
 }
 
-std::any interpreter::visit_logical_expr(const logical_expr &exp) const {
+std::any interpreter::visit_logical_expr(logical_expr &exp) {
   /*
    * Doesnt return true or false necessarily
    * Will return the truthy equivalent value
@@ -209,9 +213,27 @@ std::any interpreter::visit_logical_expr(const logical_expr &exp) const {
   return this->evaluate(*exp.right);
 }
 
-std::any interpreter::evaluate(const Expr &exp) const {
-  return exp.accept(*this);
+std::any interpreter::visit_call_expr(call_expr &exp) {
+  auto callee = this->evaluate(*exp.callee);
+  vector<std::any> args;
+  std::transform(exp.arguments.begin(), exp.arguments.end(),
+                 back_inserter(args),
+                 [&](auto &arg) { return this->evaluate(*arg); });
+  if (callee.type() != typeid(Callable *)) {
+    //
+    throw Lox_runtime_err(exp.paren, "Can only call functions or classes");
+  }
+  auto fn = std::any_cast<Callable *>(callee);
+  if (args.size() != fn->arity()) {
+    throw Lox_runtime_err(exp.paren,
+                          ("Expected " + to_string(fn->arity()) +
+                           " arguments but got " + to_string(args.size()) + ".")
+                              .c_str());
+  }
+  return fn->call(*this, args);
 }
+
+std::any interpreter::evaluate(Expr &exp) { return exp.accept(*this); }
 
 std::any interpreter::execute(Stmt &stmt) { return stmt.accept(*this); }
 

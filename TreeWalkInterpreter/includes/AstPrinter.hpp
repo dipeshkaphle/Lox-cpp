@@ -11,16 +11,15 @@
 
 class ast_printer : public expr_visitor<std::any> {
 private:
-  std::string parenthesize(std::string name, const Expr &expr) const;
+  std::string parenthesize(std::string name, Expr &expr);
 
-  std::string parenthesize(std::string name, const Expr &expr1,
-                           const Expr &expr2) const;
+  std::string parenthesize(std::string name, Expr &expr1, Expr &expr2);
 
 public:
-  std::string print(const Expr &expr) const;
-  std::any visit_binary_expr(const binary_expr &expr) const override;
-  std::any visit_unary_expr(const unary_expr &expr) const override;
-  std::any visit_grouping_expr(const grouping_expr &expr) const override;
-  std::any visit_literal_expr(const literal_expr &expr) const override;
-  std::any visit_variable_expr(const variable_expr &exp) const override;
+  std::string print(Expr &expr);
+  std::any visit_binary_expr(binary_expr &expr) override;
+  std::any visit_unary_expr(unary_expr &expr) override;
+  std::any visit_grouping_expr(grouping_expr &expr) override;
+  std::any visit_literal_expr(literal_expr &expr) override;
+  std::any visit_variable_expr(variable_expr &exp) override;
 };

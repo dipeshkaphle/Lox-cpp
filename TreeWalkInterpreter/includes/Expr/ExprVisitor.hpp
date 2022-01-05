@@ -1,21 +1,23 @@
 #pragma once
 
 #include <any>
-class binary_expr;
-class unary_expr;
-class grouping_expr;
-class literal_expr;
-class variable_expr;
-class assign_expr;
-class logical_expr;
+struct binary_expr;
+struct call_expr;
+struct unary_expr;
+struct grouping_expr;
+struct literal_expr;
+struct variable_expr;
+struct assign_expr;
+struct logical_expr;
 
 template <typename T> class expr_visitor {
 public:
-  virtual T visit_binary_expr(const binary_expr &exp) const = 0;
-  virtual T visit_unary_expr(const unary_expr &exp) const = 0;
-  virtual T visit_grouping_expr(const grouping_expr &exp) const = 0;
-  virtual T visit_literal_expr(const literal_expr &exp) const = 0;
-  virtual T visit_variable_expr(const variable_expr &exp) const = 0;
-  virtual T visit_assign_expr(const assign_expr &exp) const = 0;
-  virtual T visit_logical_expr(const logical_expr &exp) const = 0;
+  virtual T visit_binary_expr(binary_expr &exp) = 0;
+  virtual T visit_unary_expr(unary_expr &exp) = 0;
+  virtual T visit_grouping_expr(grouping_expr &exp) = 0;
+  virtual T visit_literal_expr(literal_expr &exp) = 0;
+  virtual T visit_variable_expr(variable_expr &exp) = 0;
+  virtual T visit_assign_expr(assign_expr &exp) = 0;
+  virtual T visit_logical_expr(logical_expr &exp) = 0;
+  virtual T visit_call_expr(call_expr &exp) = 0;
 };

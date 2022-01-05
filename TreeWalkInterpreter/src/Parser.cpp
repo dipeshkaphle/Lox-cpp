@@ -204,7 +204,44 @@ expr_or_err Parser::unary() {
     // return right.and_then([&](auto &&rgt))
     // return make_unique<unary_expr>(op, std::move(right));
   }
-  return primary();
+  return call();
+}
+
+expr_or_err Parser::call() {
+  auto expr = this->primary();
+  RETURN_IF_NO_VALUE(expr);
+  while (true) {
+    if (match({TokenType::LEFT_PAREN})) {
+      expr = this->finish_call(move(expr.value()));
+    } else {
+      break;
+    }
+  }
+  return expr;
+}
+expr_or_err Parser::finish_call(unique_ptr<Expr> callee) {
+  // by limiting the array to 255 size, we limit the maximum number of arguments
+  // that can be passed to a function to 255
+  std::array<unique_ptr<Expr>, 255> arguments;
+  auto it = arguments.begin();
+  if (!check(TokenType::RIGHT_PAREN)) {
+    do {
+      if (it == arguments.end()) {
+        return tl::make_unexpected<parse_err>(
+            this->error(peek(), "Cant have more than 255 arguments"));
+      }
+      auto expr = this->expression();
+      RETURN_IF_NO_VALUE(expr);
+      *it = move(expr.value());
+      std::advance(it, 1);
+    } while (match({TokenType::COMMA}));
+  }
+  auto paren = consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments");
+  RETURN_IF_NO_VALUE(paren);
+  vector<unique_ptr<Expr>> vec(make_move_iterator(arguments.begin()),
+                               make_move_iterator(it));
+  return (expr_ptr)make_unique<call_expr>(move(callee), paren.value(),
+                                          move(vec));
 }
 
 expr_or_err Parser::primary() {

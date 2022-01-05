@@ -14,5 +14,5 @@ struct unary_expr : public Expr {
 
   unary_expr(Token _op, unique_ptr<Expr> right);
 
-  std::any accept(const expr_visitor<std::any> &visitor) const override;
+  std::any accept(expr_visitor<std::any> &visitor) override;
 } __attribute__((aligned(128)));

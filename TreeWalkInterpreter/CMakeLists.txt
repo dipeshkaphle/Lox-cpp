@@ -26,6 +26,9 @@ else()
                                        ${FILES_TO_FORMAT})
 endif()
 
+# enable cache system
+include(${CMAKE_SOURCE_DIR}/ccache.cmake)
+
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 conan_basic_setup()

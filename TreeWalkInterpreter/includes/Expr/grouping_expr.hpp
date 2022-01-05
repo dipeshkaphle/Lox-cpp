@@ -13,5 +13,5 @@ struct grouping_expr : public Expr {
 
   grouping_expr(unique_ptr<Expr> val) : expression(std::move(val)) {}
 
-  std::any accept(const expr_visitor<std::any> &visitor) const override;
+  std::any accept(expr_visitor<std::any> &visitor) override;
 };

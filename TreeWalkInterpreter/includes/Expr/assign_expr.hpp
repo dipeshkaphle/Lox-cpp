@@ -15,5 +15,5 @@ struct assign_expr : public Expr {
   assign_expr(Token _name, std::unique_ptr<Expr> exp)
       : name(move(_name)), value(std::move(exp)) {}
 
-  std::any accept(const expr_visitor<std::any> &visitor) const override;
+  std::any accept(expr_visitor<std::any> &visitor) override;
 };
