@@ -23,10 +23,6 @@ private:
   std::any visit_logical_expr(logical_expr &exp) final;
   std::any visit_call_expr(call_expr &exp) final;
 
-  std::any evaluate(Expr &exp);
-  std::any execute(Stmt &stmt);
-  std::any execute_block(vector<std::unique_ptr<Stmt>> &stmts);
-
   std::any visit_print_stmt(print_stmt &stmt) final;
   std::any visit_expr_stmt(expr_stmt &stmt) final;
   std::any visit_let_stmt(let_stmt &stmt) final;
@@ -35,6 +31,7 @@ private:
   std::any visit_while_stmt(while_stmt &stmt) final;
   std::any visit_break_stmt(break_stmt &stmt) final;
   std::any visit_continue_stmt(continue_stmt &stmt) final;
+  std::any visit_fn_stmt(fn_stmt &stmt) final;
 
   static bool is_truthy(const std::any &val);
   static bool is_equal(const std::any &l, const std::any &r);
@@ -52,4 +49,8 @@ private:
 public:
   interpreter() { this->env = GlobalEnv::init(); }
   void interpret(vector<std::unique_ptr<Stmt>> &stmts, bool is_repl = false);
+  Environment &get_env();
+  std::any evaluate(Expr &exp);
+  std::any execute(Stmt &stmt);
+  std::any execute_block(vector<std::unique_ptr<Stmt>> &stmts);
 };

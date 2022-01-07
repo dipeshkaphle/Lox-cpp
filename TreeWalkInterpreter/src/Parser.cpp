@@ -1,6 +1,7 @@
 #include "includes/Parser.hpp"
 #include "includes/Lox.hpp"
 
+#include <fmt/core.h>
 #include <memory>
 #include <ranges>
 #include <vector>
@@ -486,10 +487,72 @@ stmt_or_err Parser::expression_statement() {
 }
 
 stmt_or_err Parser::declaration() {
+  if (match({TokenType::FN})) {
+    return this->fn_declaration("Function");
+  }
   if (match({TokenType::LET})) {
     return this->let_declaration();
   }
   return statement();
+}
+
+stmt_or_err Parser::fn_declaration(const string &type) {
+  auto maybe_name = consume(TokenType::IDENTIFIER,
+                            fmt::format("Expected {} name.", type).c_str());
+  auto _maybe_l_paren =
+      consume(TokenType::LEFT_PAREN,
+              fmt::format("Expect ( after {} name.", type).c_str());
+  auto parameters =
+      _maybe_l_paren
+          .and_then([&]([[maybe_unused]] auto &_p)
+                        -> tl::expected<vector<Token>, parse_err> {
+            // parses params
+            vector<Token> params;
+            if (!check(TokenType::RIGHT_PAREN)) {
+              do {
+                if (params.size() >= 255) {
+                  return tl::make_unexpected<parse_err>(
+                      this->error(peek(), "Cant have more than 255 arguments"));
+                }
+                auto maybe_new_identifier =
+                    consume(TokenType::IDENTIFIER, "Expected parameter name");
+                RETURN_IF_NO_VALUE(maybe_new_identifier);
+                params.push_back(move(maybe_new_identifier.value()));
+              } while (match({TokenType::COMMA}));
+            }
+            return params;
+          })
+          .and_then([&](vector<Token> &&params)
+                        -> tl::expected<vector<Token>, parse_err> {
+            return consume(TokenType::RIGHT_PAREN, "Expect ) after parameters.")
+                .and_then([&]([[maybe_unused]] const auto &_x)
+                              -> tl::expected<vector<Token>, parse_err> {
+                  return move(params);
+                });
+          });
+  auto body =
+      consume(TokenType::LEFT_BRACE,
+              fmt::format("Expect {} before {} body", '{', type).c_str())
+          .and_then([&]([[maybe_unused]] const auto &_)
+                        -> tl::expected<vector<stmt_ptr>, parse_err> {
+            return block();
+          });
+  return maybe_name
+      .and_then(
+          [&](auto &name)
+              -> tl::expected<std::tuple<Token, vector<Token>>, parse_err> {
+            return parameters.and_then(
+                [&](auto &v) -> tl::expected<std::tuple<Token, vector<Token>>,
+                                             parse_err> {
+                  return tuple<Token, vector<Token>>{move(name), move(v)};
+                });
+          })
+      .and_then([&](tuple<Token, vector<Token>> &&tup) -> stmt_or_err {
+        return body.and_then([&](vector<stmt_ptr> &blck) -> stmt_or_err {
+          return (stmt_ptr)make_unique<fn_stmt>(move(get<0>(tup)),
+                                                move(get<1>(tup)), move(blck));
+        });
+      });
 }
 
 stmt_or_err Parser::let_declaration() {

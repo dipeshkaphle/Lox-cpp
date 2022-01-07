@@ -3,6 +3,7 @@
 #include "includes/Stmt/BreakStmt.hpp"
 #include "includes/Stmt/ContinueStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/FnStmt.hpp"
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
@@ -137,5 +138,22 @@ std::any continue_stmt::accept(stmt_visitor<std::any> &visitor) {
 };
 /*
  * Continue Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Fn Statement
+ */
+
+fn_stmt::fn_stmt(Token fn_name, vector<Token> params, vector<stmt_ptr> fn_body)
+    : name(move(fn_name)), params(move(params)), body(move(fn_body)) {}
+
+std::any fn_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_fn_stmt(*this);
+}
+
+/*
+ * Fn Statement End
  *  =============================================================================
  */

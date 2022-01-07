@@ -7,10 +7,15 @@ target_link_libraries(Lox PRIVATE CONAN_PKG::tl-expected CONAN_PKG::fmt)
 target_include_directories(Lox PUBLIC ${lox_SOURCE_DIR}
                                       ${CMAKE_CURRENT_SOURCE_DIR})
 
-# target_sources(Lox PRIVATE Lox.cpp Scanner.cpp Parser.cpp AstPrinter.cpp
-# Environment.cpp Interpreter.cpp)
-target_sources(Lox PRIVATE Lox.cpp Scanner.cpp Parser.cpp Environment.cpp
-                           Interpreter.cpp)
+target_sources(
+  Lox
+  PRIVATE Lox.cpp
+          Scanner.cpp
+          Parser.cpp
+          Environment.cpp
+          LoxFn.cpp
+          AstPrinter.cpp
+          Interpreter.cpp)
 
 add_subdirectory(Expr)
 add_subdirectory(Stmt)

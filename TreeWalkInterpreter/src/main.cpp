@@ -15,10 +15,11 @@
 #include "includes/Scanner.hpp"
 #include "includes/Token.hpp"
 
-#include "fmt/core.h"
-#include "fmt/format.h"
-#include "fmt/ostream.h"
-#include "tl/expected.hpp"
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+#include <tl/expected.hpp>
 using namespace tl;
 
 using std::string;
@@ -30,8 +31,14 @@ void run(const string &source, bool is_repl = false) {
   std::vector<Token> tokens = scanner.scan_tokens();
 
 #ifdef DEBUG
+  fmt::print("=======================================\n");
+  fmt::print("All the Tokens\n");
+  fmt::print("=======================================\n");
+  fmt::print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
   std::ranges::for_each(tokens,
                         [](auto &x) { fmt::print("{}\n", x.to_string()); });
+  fmt::print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
+  fmt::print("=======================================\n");
 #endif
 
   Parser parser(tokens);
@@ -42,10 +49,31 @@ void run(const string &source, bool is_repl = false) {
     return;
   }
   vector<std::unique_ptr<Stmt>> statements;
+  // AstPrinter
   statements.reserve(maybe_statements.size());
+
+#ifdef DEBUG
+  fmt::print("=======================================\n");
+  fmt::print("All the Statements\n");
+  fmt::print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
+#endif
+
   std::ranges::for_each(maybe_statements, [&](auto &maybe_stmt) {
-    statements.emplace_back(std::move(maybe_stmt.value()));
+    auto s = move(maybe_stmt.value());
+
+#ifdef DEBUG
+    ast_printer printer;
+    fmt::print("{}\n", printer.print(*s));
+#endif
+
+    statements.emplace_back(std::move(s));
   });
+
+#ifdef DEBUG
+  fmt::print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
+  fmt::print("=======================================\n");
+#endif
+
   Lox::interp.interpret(statements, is_repl);
 }
 

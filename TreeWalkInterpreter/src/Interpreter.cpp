@@ -9,8 +9,10 @@
 #include "includes/Expr/unary_expr.hpp"
 #include "includes/Expr/variable_expr.hpp"
 #include "includes/Lox.hpp"
+#include "includes/LoxFn.hpp"
 #include "includes/Stmt/BlockStmt.hpp"
 #include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/FnStmt.hpp"
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
@@ -18,9 +20,8 @@
 #include "includes/TokenTypes.hpp"
 #include "includes/runtime_err.hpp"
 
-#include "fmt/core.h"
-
-#include "algorithm"
+#include <algorithm>
+#include <fmt/core.h>
 
 // TODO : Make all the visit expr and visit stmt return tl::expected<any,Err>
 
@@ -219,18 +220,29 @@ std::any interpreter::visit_call_expr(call_expr &exp) {
   std::transform(exp.arguments.begin(), exp.arguments.end(),
                  back_inserter(args),
                  [&](auto &arg) { return this->evaluate(*arg); });
-  if (callee.type() != typeid(Callable *)) {
-    //
-    throw Lox_runtime_err(exp.paren, "Can only call functions or classes");
+  // native fn
+  if (callee.type() == typeid(Callable *)) {
+    auto fn = std::any_cast<Callable *>(callee);
+    if (args.size() != fn->arity()) {
+      throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
+                                        " arguments but got " +
+                                        to_string(args.size()) + ".")
+                                           .c_str());
+    }
+    return fn->call(*this, args);
   }
-  auto fn = std::any_cast<Callable *>(callee);
-  if (args.size() != fn->arity()) {
-    throw Lox_runtime_err(exp.paren,
-                          ("Expected " + to_string(fn->arity()) +
-                           " arguments but got " + to_string(args.size()) + ".")
-                              .c_str());
+  // user defined fn
+  if (callee.type() == typeid(shared_ptr<LoxFn>)) {
+    auto fn = std::any_cast<shared_ptr<LoxFn>>(callee);
+    if (args.size() != fn->arity()) {
+      throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
+                                        " arguments but got " +
+                                        to_string(args.size()) + ".")
+                                           .c_str());
+    }
+    return fn->call(*this, args);
   }
-  return fn->call(*this, args);
+  throw Lox_runtime_err(exp.paren, "Can only call functions or classes");
 }
 
 std::any interpreter::evaluate(Expr &exp) { return exp.accept(*this); }
@@ -239,7 +251,7 @@ std::any interpreter::execute(Stmt &stmt) { return stmt.accept(*this); }
 
 std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
   // pushing a stack frame
-  this->env.push_frame();
+  this->get_env().push_frame();
   try {
     std::any ret_val{};
     for (auto &stmt : stmts) {
@@ -257,7 +269,7 @@ std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
         break;
       }
     }
-    this->env.pop_frame();
+    this->get_env().pop_frame();
     return ret_val;
   } catch (Lox_runtime_err &err) {
     // popping stack frame
@@ -327,6 +339,15 @@ interpreter::visit_continue_stmt([[maybe_unused]] continue_stmt &_stmt) {
   return {};
 }
 
+std::any interpreter::visit_fn_stmt(fn_stmt &stmt) {
+  auto fn_name = stmt.name.lexeme;
+  auto fn = LoxFn(move(stmt));
+  auto name = fn.to_string();
+  this->get_env().define(
+      fn_name, make_any<shared_ptr<LoxFn>>(make_shared<LoxFn>(move(fn))));
+  return name;
+}
+
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
                             bool is_repl) {
   try {
@@ -340,3 +361,5 @@ void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
     Lox::report_runtime_error(err);
   }
 }
+
+Environment &interpreter::get_env() { return this->env; }

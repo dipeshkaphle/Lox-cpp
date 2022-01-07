@@ -9,6 +9,7 @@ class break_stmt;
 class continue_stmt;
 class block_stmt;
 class if_stmt;
+class fn_stmt;
 
 template <typename T> class stmt_visitor {
 public:
@@ -20,4 +21,5 @@ public:
   virtual T visit_while_stmt(while_stmt &stmt) = 0;
   virtual T visit_break_stmt(break_stmt &stmt) = 0;
   virtual T visit_continue_stmt(continue_stmt &stmt) = 0;
+  virtual T visit_fn_stmt(fn_stmt &stmt) = 0;
 };

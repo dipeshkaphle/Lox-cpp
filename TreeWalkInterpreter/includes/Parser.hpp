@@ -17,6 +17,7 @@
 #include "Stmt/BreakStmt.hpp"
 #include "Stmt/ContinueStmt.hpp"
 #include "Stmt/ExprStmt.hpp"
+#include "Stmt/FnStmt.hpp"
 #include "Stmt/IfStmt.hpp"
 #include "Stmt/LetStmt.hpp"
 #include "Stmt/PrintStmt.hpp"
@@ -25,7 +26,7 @@
 #include "Token.hpp"
 #include "TokenTypes.hpp"
 
-#include "tl/expected.hpp"
+#include <tl/expected.hpp>
 using namespace tl;
 
 using namespace std;
@@ -102,6 +103,7 @@ private:
   stmt_or_err expression_statement();
   stmt_or_err print_statement();
   stmt_or_err declaration();
+  stmt_or_err fn_declaration(const string &type);
   stmt_or_err let_declaration();
   stmt_or_err if_statement();
   stmt_or_err while_statement();

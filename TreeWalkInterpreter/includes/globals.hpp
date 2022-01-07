@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Callable.hpp"
-#include "Environment.hpp"
+#include "includes/Callable.hpp"
+#include "includes/Environment.hpp"
 
 #include <chrono>
 #include <memory>
@@ -17,14 +17,15 @@ class clock_fn : public Callable {
         std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     return (double)millis;
   }
+  std::string to_string() const final { return "<native_fn clock >"; }
 };
 
 namespace GlobalEnv {
+static inline clock_fn clock;
+
 static inline Environment init() {
   Environment global{};
-  static clock_fn clock;
   global.define("clock", make_any<Callable *>(&clock));
-
   return global;
 }
 } // namespace GlobalEnv

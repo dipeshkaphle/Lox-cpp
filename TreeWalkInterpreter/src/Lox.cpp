@@ -1,7 +1,7 @@
 #include "includes/Lox.hpp"
 
-#include "fmt/core.h"
-#include "fmt/ostream.h"
+#include <fmt/core.h>
+#include <fmt/ostream.h>
 
 using std::string;
 using std::string_view;
