@@ -7,6 +7,7 @@
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
+#include "includes/Stmt/ReturnStmt.hpp"
 #include "includes/Stmt/WhileStmt.hpp"
 
 /*
@@ -155,5 +156,21 @@ std::any fn_stmt::accept(stmt_visitor<std::any> &visitor) {
 
 /*
  * Fn Statement End
+ *  =============================================================================
+ */
+
+/*
+ * =============================================================================
+ * Return Statement
+ */
+
+return_stmt::return_stmt(Token keyword, optional<unique_ptr<Expr>> val)
+    : keyword(move(keyword)), value(move(val)) {}
+std::any return_stmt::accept(stmt_visitor<std::any> &visitor) {
+  return visitor.visit_return_stmt(*this);
+}
+
+/*
+ * Return Statement End
  *  =============================================================================
  */

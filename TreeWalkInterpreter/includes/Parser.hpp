@@ -21,6 +21,7 @@
 #include "Stmt/IfStmt.hpp"
 #include "Stmt/LetStmt.hpp"
 #include "Stmt/PrintStmt.hpp"
+#include "Stmt/ReturnStmt.hpp"
 #include "Stmt/Stmt.hpp"
 #include "Stmt/WhileStmt.hpp"
 #include "Token.hpp"
@@ -102,6 +103,7 @@ private:
   stmt_or_err continue_statement();
   stmt_or_err expression_statement();
   stmt_or_err print_statement();
+  stmt_or_err return_statement();
   stmt_or_err declaration();
   stmt_or_err fn_declaration(const string &type);
   stmt_or_err let_declaration();

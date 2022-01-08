@@ -13,8 +13,12 @@ std::any LoxFn::call([[maybe_unused]] interpreter &intrptr,
   try {
     intrptr.get_env().push_frame();
 
+    vector<any> evaluated;
+    // std::ranges::transform(arguments,back_inserter(evaluated), [](auto &arg){
+    // return intrptr.get_env().define()
+    // } );
     std::ranges::for_each(fn_decl.params, [&, i = 0](auto &arg) mutable {
-      intrptr.get_env().define(arg.lexeme, move(arguments[i++]));
+      intrptr.get_env().define(arg.lexeme, arguments[i++]);
     });
 
     auto ret_val = intrptr.execute_block(fn_decl.body);

@@ -1,14 +1,3 @@
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <numeric>
-#include <ranges>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <vector>
-
 #include "includes/AstPrinter.hpp"
 #include "includes/Lox.hpp"
 #include "includes/Parser.hpp"
@@ -20,6 +9,17 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <tl/expected.hpp>
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
 using namespace tl;
 
 using std::string;
@@ -49,7 +49,6 @@ void run(const string &source, bool is_repl = false) {
     return;
   }
   vector<std::unique_ptr<Stmt>> statements;
-  // AstPrinter
   statements.reserve(maybe_statements.size());
 
 #ifdef DEBUG
@@ -74,10 +73,16 @@ void run(const string &source, bool is_repl = false) {
   fmt::print("=======================================\n");
 #endif
 
+#ifdef DEBUG
+  fmt::print("=======================================\n");
+  fmt::print("Interpreters output\n");
+  fmt::print("=======================================\n");
+#endif
+
   Lox::interp.interpret(statements, is_repl);
 }
 
-void runFile(char *filename) {
+void runFile(const char *filename) {
   std::ifstream inp(filename);
 
   if (inp.is_open()) {
@@ -120,6 +125,7 @@ void runPrompt() {
 }
 
 int main(int argc, char **argv) {
+
   if (argc > 2) {
     fmt::print("Usage: cpplox [script]");
     exit(255);

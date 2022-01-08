@@ -16,6 +16,7 @@
 #include "includes/Stmt/IfStmt.hpp"
 #include "includes/Stmt/LetStmt.hpp"
 #include "includes/Stmt/PrintStmt.hpp"
+#include "includes/Stmt/ReturnStmt.hpp"
 #include "includes/Stmt/WhileStmt.hpp"
 #include "includes/TokenTypes.hpp"
 #include "includes/runtime_err.hpp"
@@ -118,10 +119,10 @@ std::any interpreter::visit_binary_expr(binary_expr &exp) {
     return any_cast<double>(left) - any_cast<double>(right);
   case TokenType::PLUS:
     if (left.type() == typeid(double) && right.type() == typeid(double)) {
-      return any_cast<double>(left) + any_cast<double>(right);
+      return make_any<double>(any_cast<double>(left) + any_cast<double>(right));
     }
     if (left.type() == typeid(string) && right.type() == typeid(string)) {
-      return any_cast<string>(left) + any_cast<string>(right);
+      return make_any<string>(any_cast<string>(left) + any_cast<string>(right));
     }
     throw Lox_runtime_err(exp.op,
                           "Operands must be two numbers or two strings");
@@ -215,34 +216,39 @@ std::any interpreter::visit_logical_expr(logical_expr &exp) {
 }
 
 std::any interpreter::visit_call_expr(call_expr &exp) {
-  auto callee = this->evaluate(*exp.callee);
-  vector<std::any> args;
-  std::transform(exp.arguments.begin(), exp.arguments.end(),
-                 back_inserter(args),
-                 [&](auto &arg) { return this->evaluate(*arg); });
-  // native fn
-  if (callee.type() == typeid(Callable *)) {
-    auto fn = std::any_cast<Callable *>(callee);
-    if (args.size() != fn->arity()) {
-      throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
-                                        " arguments but got " +
-                                        to_string(args.size()) + ".")
-                                           .c_str());
+  try {
+    auto callee = this->evaluate(*exp.callee);
+    vector<std::any> args;
+    std::transform(exp.arguments.begin(), exp.arguments.end(),
+                   back_inserter(args),
+                   [&](auto &arg) { return this->evaluate(*arg); });
+    // native fn
+    if (callee.type() == typeid(Callable *)) {
+      auto *fn = std::any_cast<Callable *>(callee);
+      if (args.size() != fn->arity()) {
+        throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
+                                          " arguments but got " +
+                                          to_string(args.size()) + ".")
+                                             .c_str());
+      }
+      return fn->call(*this, args);
     }
-    return fn->call(*this, args);
-  }
-  // user defined fn
-  if (callee.type() == typeid(shared_ptr<LoxFn>)) {
-    auto fn = std::any_cast<shared_ptr<LoxFn>>(callee);
-    if (args.size() != fn->arity()) {
-      throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
-                                        " arguments but got " +
-                                        to_string(args.size()) + ".")
-                                           .c_str());
+    // user defined fn
+    if (callee.type() == typeid(shared_ptr<LoxFn>)) {
+      auto fn = std::any_cast<shared_ptr<LoxFn>>(callee);
+      if (args.size() != fn->arity()) {
+        throw Lox_runtime_err(exp.paren, ("Expected " + to_string(fn->arity()) +
+                                          " arguments but got " +
+                                          to_string(args.size()) + ".")
+                                             .c_str());
+      }
+      auto ret = fn->call(*this, args);
+      return ret;
     }
-    return fn->call(*this, args);
+    throw Lox_runtime_err(exp.paren, "Can only call functions or classes");
+  } catch (Lox_runtime_err &err) {
+    throw move(err);
   }
-  throw Lox_runtime_err(exp.paren, "Can only call functions or classes");
 }
 
 std::any interpreter::evaluate(Expr &exp) { return exp.accept(*this); }
@@ -268,12 +274,16 @@ std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
       if (this->break_from_current_loop || this->continue_loop) {
         break;
       }
+      if (this->return_from_here) {
+        this->return_from_here = false;
+        break;
+      }
     }
     this->get_env().pop_frame();
     return ret_val;
   } catch (Lox_runtime_err &err) {
     // popping stack frame
-    this->env.pop_frame();
+    this->get_env().pop_frame();
     throw std::move(err);
   }
 }
@@ -346,6 +356,15 @@ std::any interpreter::visit_fn_stmt(fn_stmt &stmt) {
   this->get_env().define(
       fn_name, make_any<shared_ptr<LoxFn>>(make_shared<LoxFn>(move(fn))));
   return name;
+}
+std::any interpreter::visit_return_stmt(return_stmt &stmt) {
+
+  std::any ret_val {};
+  if (stmt.value.has_value()) {
+    ret_val = this->evaluate(*stmt.value.value());
+  }
+  this->return_from_here = true;
+  return ret_val; 
 }
 
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,

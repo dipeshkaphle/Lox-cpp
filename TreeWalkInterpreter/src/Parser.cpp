@@ -213,7 +213,8 @@ expr_or_err Parser::call() {
   RETURN_IF_NO_VALUE(expr);
   while (true) {
     if (match({TokenType::LEFT_PAREN})) {
-      expr = this->finish_call(move(expr.value()));
+      auto tmp = move(expr.value());
+      expr = this->finish_call(move(tmp));
     } else {
       break;
     }
@@ -295,6 +296,9 @@ stmt_or_err Parser::statement() {
   }
   if (this->match({TokenType::PRINT})) {
     return this->print_statement();
+  }
+  if (this->match({TokenType::RETURN})) {
+    return this->return_statement();
   }
   if (this->match({TokenType::LEFT_BRACE})) {
     auto maybe_stmts = this->block();
@@ -475,6 +479,17 @@ stmt_or_err Parser::print_statement() {
   });
 }
 
+stmt_or_err Parser::return_statement() {
+  auto stmt = make_unique<return_stmt>(this->previous());
+  if (!check(TokenType::SEMICOLON)) {
+    auto maybe_exp = this->expression();
+    RETURN_IF_NO_VALUE(maybe_exp);
+    stmt->value = make_optional(move(maybe_exp.value()));
+  }
+  return consume(TokenType::SEMICOLON, "Expect ; after return value")
+      .map([&]([[maybe_unused]] auto &&_) { return move(stmt); });
+}
+
 stmt_or_err Parser::expression_statement() {
   auto expr = this->expression();
   RETURN_IF_NO_VALUE(expr);
@@ -499,11 +514,11 @@ stmt_or_err Parser::declaration() {
 stmt_or_err Parser::fn_declaration(const string &type) {
   auto maybe_name = consume(TokenType::IDENTIFIER,
                             fmt::format("Expected {} name.", type).c_str());
-  auto _maybe_l_paren =
+  auto maybe_l_paren =
       consume(TokenType::LEFT_PAREN,
               fmt::format("Expect ( after {} name.", type).c_str());
   auto parameters =
-      _maybe_l_paren
+      maybe_l_paren
           .and_then([&]([[maybe_unused]] auto &_p)
                         -> tl::expected<vector<Token>, parse_err> {
             // parses params

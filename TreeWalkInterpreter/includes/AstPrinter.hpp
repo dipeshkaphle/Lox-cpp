@@ -17,6 +17,7 @@
 #include "Stmt/IfStmt.hpp"
 #include "Stmt/LetStmt.hpp"
 #include "Stmt/PrintStmt.hpp"
+#include "Stmt/ReturnStmt.hpp"
 #include "Stmt/WhileStmt.hpp"
 
 #include <string>
@@ -48,4 +49,5 @@ public:
   std::any visit_break_stmt(break_stmt &stmt) final;
   std::any visit_continue_stmt(continue_stmt &stmt) final;
   std::any visit_fn_stmt(fn_stmt &stmt) final;
+  std::any visit_return_stmt(return_stmt &stmt) final;
 };

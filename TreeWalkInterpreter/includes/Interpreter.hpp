@@ -4,6 +4,7 @@
 #include "Expr/ExprVisitor.hpp"
 #include "Stmt/Stmt.hpp"
 #include "Stmt/StmtVisitor.hpp"
+#include "includes/AstPrinter.hpp"
 #include "includes/Expr/Expr.hpp"
 #include "includes/Token.hpp"
 #include "includes/globals.hpp"
@@ -32,6 +33,7 @@ private:
   std::any visit_break_stmt(break_stmt &stmt) final;
   std::any visit_continue_stmt(continue_stmt &stmt) final;
   std::any visit_fn_stmt(fn_stmt &stmt) final;
+  std::any visit_return_stmt(return_stmt &stmt) final;
 
   static bool is_truthy(const std::any &val);
   static bool is_equal(const std::any &l, const std::any &r);
@@ -45,8 +47,10 @@ private:
   Environment env{};
   bool break_from_current_loop{};
   bool continue_loop{};
+  bool return_from_here{};
 
 public:
+  static inline ast_printer printer{};
   interpreter() { this->env = GlobalEnv::init(); }
   void interpret(vector<std::unique_ptr<Stmt>> &stmts, bool is_repl = false);
   Environment &get_env();

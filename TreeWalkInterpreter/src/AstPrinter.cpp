@@ -92,14 +92,15 @@ std::any ast_printer::visit_block_stmt(block_stmt &stmt) {
 
 std::any ast_printer::visit_if_stmt(if_stmt &stmt) {
   return fmt::format(
-      "IF {} \nTHEN \n{} \nELSE\n {}\n ENDIF", this->print(*stmt.condition),
+      "IF {} \n  THEN \n{} \nELSE\n {}\nENDIF", this->print(*stmt.condition),
       this->print(*stmt.then_branch),
       stmt.else_branch.has_value() ? this->print(*stmt.else_branch.value())
                                    : "EMPTY"s);
 }
 
 std::any ast_printer::visit_while_stmt(while_stmt &stmt) {
-  return fmt::format("WHILE {} <BLOCK> ENDWHILE", this->print(*stmt.condition));
+  return fmt::format("WHILE {} \n\t <BLOCK> \n ENDWHILE",
+                     this->print(*stmt.condition));
 }
 
 std::any ast_printer::visit_break_stmt([[maybe_unused]] break_stmt &stmt) {
@@ -112,5 +113,21 @@ ast_printer::visit_continue_stmt([[maybe_unused]] continue_stmt &stmt) {
 }
 
 std::any ast_printer::visit_fn_stmt(fn_stmt &stmt) {
-  return fmt::format("DECL FN {} ENDFN", stmt.name.lexeme);
+  vector<string> args_name;
+  ranges::transform(stmt.params, back_inserter(args_name),
+                    [](auto &x) { return x.lexeme; });
+  auto ret = fmt::format("DECL FN {} ( {} )\n", stmt.name.lexeme,
+                         fmt::join(args_name, ", "));
+  vector<string> printed_fn_body;
+  ranges::transform(stmt.body, back_inserter(printed_fn_body),
+                    [&](auto &x) { return "\t" + this->print(*x); });
+  ret += fmt::format("{}\n", fmt::join(printed_fn_body, "\n"));
+  ret += fmt::format("ENDFN\n");
+  return ret;
+}
+
+std::any ast_printer::visit_return_stmt([[maybe_unused]] return_stmt &stmt) {
+  return fmt::format("RETURN {}", stmt.value.has_value()
+                                      ? this->print(*stmt.value.value())
+                                      : "");
 }

@@ -5,4 +5,16 @@ fn foo(a,b,c){
 	print c;
 }
 
-foo("Hi ","da ","wassup?");
+fn do_nothing(){
+	return ;
+}
+fn return_x(x){
+	return x;
+}
+
+foo("Hi ","da ","wassup?"); 
+
+print do_nothing();
+
+print return_x(2);
+
