@@ -295,7 +295,10 @@ stmt_or_err Parser::statement() {
     return this->continue_statement();
   }
   if (this->match({TokenType::PRINT})) {
-    return this->print_statement();
+    return this->print_statement(false);
+  }
+  if (this->match({TokenType::PRINTLN})) {
+    return this->print_statement(true);
   }
   if (this->match({TokenType::RETURN})) {
     return this->return_statement();
@@ -468,14 +471,14 @@ stmt_or_err Parser::for_statement() {
   return maybe_body;
 }
 
-stmt_or_err Parser::print_statement() {
+stmt_or_err Parser::print_statement(bool new_line) {
   auto expr = this->expression();
   RETURN_IF_NO_VALUE(expr);
   auto maybe_semicolon =
       consume(TokenType::SEMICOLON, "Expect ; after statement");
   RETURN_IF_NO_VALUE(maybe_semicolon);
   return move(expr).and_then([&](expr_or_err &&exp) -> stmt_or_err {
-    return std::make_unique<print_stmt>(move(exp.value()));
+    return std::make_unique<print_stmt>(move(exp.value()), new_line);
   });
 }
 

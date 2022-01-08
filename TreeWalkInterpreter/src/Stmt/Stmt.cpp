@@ -31,7 +31,8 @@ std::any expr_stmt::accept(stmt_visitor<std::any> &visitor) {
  * Print Statement
  */
 
-print_stmt::print_stmt(std::unique_ptr<Expr> expr) : expr(std::move(expr)) {}
+print_stmt::print_stmt(std::unique_ptr<Expr> expr, bool new_line)
+    : expr(std::move(expr)), has_newline(new_line) {}
 
 std::any print_stmt::accept(stmt_visitor<std::any> &visitor) {
   return visitor.visit_print_stmt(*this);

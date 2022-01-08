@@ -2,12 +2,25 @@
 using tok = TokenType;
 
 const unordered_map<string, TokenType> Scanner::keywords = {
-    {"and", tok::AND},     {"or", tok::OR},       {"class", tok::CLASS},
-    {"else", tok::ELSE},   {"false", tok::FALSE}, {"true", tok::TRUE},
-    {"for", tok::FOR},     {"fn", tok::FN},       {"if", tok::IF},
-    {"nil", tok::NIL},     {"print", tok::PRINT}, {"return", tok::RETURN},
-    {"super", tok::SUPER}, {"this", tok::THIS},   {"let", tok::LET},
-    {"while", tok::WHILE}, {"break", tok::BREAK}, {"continue", tok::CONTINUE}};
+    {"and", tok::AND},
+    {"or", tok::OR},
+    {"class", tok::CLASS},
+    {"else", tok::ELSE},
+    {"false", tok::FALSE},
+    {"true", tok::TRUE},
+    {"for", tok::FOR},
+    {"fn", tok::FN},
+    {"if", tok::IF},
+    {"nil", tok::NIL},
+    {"println", tok::PRINTLN},
+    {"print", tok::PRINT},
+    {"return", tok::RETURN},
+    {"super", tok::SUPER},
+    {"this", tok::THIS},
+    {"let", tok::LET},
+    {"while", tok::WHILE},
+    {"break", tok::BREAK},
+    {"continue", tok::CONTINUE}};
 
 char Scanner::peek() {
   if (is_at_end()) {

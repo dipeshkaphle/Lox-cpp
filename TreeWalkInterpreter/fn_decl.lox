@@ -1,8 +1,6 @@
 fn foo(a,b,c){
 	print a+b+c;
-	print a;
-	print b;
-	print c;
+	println "";
 }
 
 fn do_nothing(){
@@ -14,7 +12,7 @@ fn return_x(x){
 
 foo("Hi ","da ","wassup?"); 
 
-print do_nothing();
+println do_nothing();
 
-print return_x(2);
+println return_x(2);
 

@@ -70,7 +70,8 @@ std::string ast_printer::print(Stmt &stmt) {
 }
 
 std::any ast_printer::visit_print_stmt(print_stmt &stmt) {
-  return fmt::format("PRINT {}", this->print(*stmt.expr));
+  return fmt::format("PRINT{} {}", stmt.has_newline ? "LN" : "",
+                     this->print(*stmt.expr));
 }
 
 std::any ast_printer::visit_expr_stmt(expr_stmt &stmt) {

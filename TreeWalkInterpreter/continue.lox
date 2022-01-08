@@ -1,19 +1,19 @@
 for( let x=1;x<=10;x=x+1){
 	if(x < 5)
 		continue;
-	print x;
+	println x;
 }
 
 for(let x=1;x<=10;x=x+1){
 	if (x!=5){
 		continue;
 	}
-	print x;
+	println x;
 	for (let y=1;y<=10;y=y+1){
 		if(y!=5){
 			continue;
 		}
-		print x*y;
+		println x*y;
 	}
 }
 

@@ -1,10 +1,10 @@
 let f1 = 0;
 let f2 = 1;
-print f1;
-print f2;
+println f1;
+println f2;
 for(let i=2;i<=20;i=i+1){
 	let tmp = f2;
 	f2 = f2+f1;
 	f1 = tmp;
-	print f2;
+	println f2;
 }

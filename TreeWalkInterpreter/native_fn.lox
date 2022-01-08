@@ -1,2 +1,2 @@
 clock();
-print clock();
+println clock();

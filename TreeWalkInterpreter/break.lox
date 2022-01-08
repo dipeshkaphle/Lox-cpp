@@ -4,7 +4,7 @@ while(i>=0){
 	if (i==6){
 		for(let j=0;j<10;j=j+1){
 		//this correctly doesnt break me out of the outerloop
-			print "This inner for loop runs just once";
+			println "This inner for loop runs just once";
 			break;
 		}
 
@@ -14,9 +14,9 @@ while(i>=0){
 
 	if ( i >=5 ) print "hi";
 
-	else print "hello";
+	else println "hello";
 
 	i = i-1;
 }
 // break; // parsing error if not inside any loop
-print "Hello from the end";
+println "Hello from the end";

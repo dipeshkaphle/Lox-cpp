@@ -290,7 +290,7 @@ std::any interpreter::execute_block(vector<stmt_ptr> &stmts) {
 
 std::any interpreter::visit_print_stmt(print_stmt &stmt) {
   auto val = this->evaluate(*stmt.expr);
-  fmt::print("{}\n", this->stringify(val));
+  fmt::print("{}{}", this->stringify(val), stmt.has_newline ? "\n" : "");
   return val;
 }
 
@@ -359,12 +359,12 @@ std::any interpreter::visit_fn_stmt(fn_stmt &stmt) {
 }
 std::any interpreter::visit_return_stmt(return_stmt &stmt) {
 
-  std::any ret_val {};
+  std::any ret_val{};
   if (stmt.value.has_value()) {
     ret_val = this->evaluate(*stmt.value.value());
   }
   this->return_from_here = true;
-  return ret_val; 
+  return ret_val;
 }
 
 void interpreter::interpret(vector<std::unique_ptr<Stmt>> &stmts,
