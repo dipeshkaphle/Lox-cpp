@@ -1,24 +1,6 @@
 #pragma once
 #include "Expr/Expr.hpp"
-#include "Expr/ExprVisitor.hpp"
-#include "Expr/assign_expr.hpp"
-#include "Expr/binary_expr.hpp"
-#include "Expr/call_expr.hpp"
-#include "Expr/grouping_expr.hpp"
-#include "Expr/literal_expr.hpp"
-#include "Expr/logical_expr.hpp"
-#include "Expr/unary_expr.hpp"
-#include "Expr/variable_expr.hpp"
-#include "Stmt/BlockStmt.hpp"
-#include "Stmt/BreakStmt.hpp"
-#include "Stmt/ContinueStmt.hpp"
-#include "Stmt/ExprStmt.hpp"
-#include "Stmt/FnStmt.hpp"
-#include "Stmt/IfStmt.hpp"
-#include "Stmt/LetStmt.hpp"
-#include "Stmt/PrintStmt.hpp"
-#include "Stmt/ReturnStmt.hpp"
-#include "Stmt/WhileStmt.hpp"
+#include "Stmt/Stmt.hpp"
 
 #include <string>
 

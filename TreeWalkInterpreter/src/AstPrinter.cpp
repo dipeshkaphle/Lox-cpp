@@ -1,4 +1,22 @@
 #include "includes/AstPrinter.hpp"
+#include "includes/Expr/assign_expr.hpp"
+#include "includes/Expr/binary_expr.hpp"
+#include "includes/Expr/call_expr.hpp"
+#include "includes/Expr/grouping_expr.hpp"
+#include "includes/Expr/literal_expr.hpp"
+#include "includes/Expr/logical_expr.hpp"
+#include "includes/Expr/unary_expr.hpp"
+#include "includes/Expr/variable_expr.hpp"
+#include "includes/Stmt/BlockStmt.hpp"
+#include "includes/Stmt/BreakStmt.hpp"
+#include "includes/Stmt/ContinueStmt.hpp"
+#include "includes/Stmt/ExprStmt.hpp"
+#include "includes/Stmt/FnStmt.hpp"
+#include "includes/Stmt/IfStmt.hpp"
+#include "includes/Stmt/LetStmt.hpp"
+#include "includes/Stmt/PrintStmt.hpp"
+#include "includes/Stmt/ReturnStmt.hpp"
+#include "includes/Stmt/WhileStmt.hpp"
 
 #include <fmt/core.h>
 

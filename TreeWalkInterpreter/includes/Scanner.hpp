@@ -50,6 +50,8 @@ class Scanner {
    */
   void add_token(TokenType type, const std::any &literal = string(""));
 
+  [[nodiscard]] std::string parse_with_escapes(string_view s) const;
+
   /*
    * parses a string literal
    */

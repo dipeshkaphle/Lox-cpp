@@ -1,0 +1,6 @@
+let s = "Hi
+\tHello World!!!!\n
+\\\aBye
+";
+
+print s;

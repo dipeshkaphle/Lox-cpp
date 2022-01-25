@@ -1,4 +1,7 @@
 #include "includes/Scanner.hpp"
+
+#include <fmt/core.h>
+
 using tok = TokenType;
 
 const unordered_map<string, TokenType> Scanner::keywords = {
@@ -52,10 +55,44 @@ void Scanner::add_token(TokenType type, const std::any &literal) {
   tokens.emplace_back(Token(type, text, literal, cur_line));
 }
 
+std::string Scanner::parse_with_escapes(string_view s) const {
+  // https://en.cppreference.com/w/cpp/language/escape
+  std::unordered_map<char, char> valid_escapes{
+      {'\'', 0x27}, {'"', 0x22}, {'?', 0x3f}, {'\\', 0x5c},
+      {'a', 0x07},  {'b', 0x08}, {'f', 0x0c}, {'n', 0x0a},
+      {'r', 0x0d},  {'t', 0x09}, {'v', 0x0b}};
+
+  auto it = s.begin();
+  string result;
+  bool escape = false;
+  while (it != s.end()) {
+    if (!escape && *it == '\\') {
+      escape = true;
+    } else {
+      if (escape) {
+        char c = *it;
+        if (valid_escapes.contains(c)) {
+          result.push_back(valid_escapes[c]);
+        } else {
+          result.push_back(c);
+        }
+        escape = false;
+      } else {
+        result.push_back(*it);
+      }
+    }
+    it++;
+  }
+  return result;
+}
+
 void Scanner::get_string() {
   while (!is_at_end() && peek() != '"') {
     if (peek() == '\n') {
       cur_line++;
+    }
+    if (peek() == '\\') {
+      advance();
     }
     advance();
   }
@@ -76,8 +113,9 @@ void Scanner::get_string() {
    * we want 1 to  3
    * so we do substr(start+1, (cur-2)-(start+1) + 1)
    */
-  string str =
-      source.substr(start + 1, (this->cur - 2) - (this->start + 1) + 1);
+  string sv = source;
+  string str = parse_with_escapes(
+      sv.substr(start + 1, (this->cur - 2) - (this->start + 1) + 1));
   add_token(TokenType::STRING, str);
 }
 
